@@ -1,0 +1,20 @@
+[Unit]
+Description=Canva Kiosk Service
+After=display-manager.service
+Requires=display-manager.service
+
+[Service]
+User=teofilwetzel
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/teofilwetzel/.Xauthority
+WorkingDirectory=/home/teofilwetzel/Pi-Canva-Viewer
+ExecStart=/home/teofilwetzel/Pi-Canva-Viewer/start_canva.sh
+Restart=on-failure
+RestartSec=10
+KillMode=none
+RemainAfterExit=yes
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical.target
