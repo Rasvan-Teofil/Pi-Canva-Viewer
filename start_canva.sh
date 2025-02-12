@@ -50,6 +50,9 @@ fi
 log "Waiting for the X server..."
 export DISPLAY="$DISPLAY_NUM"
 sleep 5
+# unclutter the mouse
+unclutter -idle 1 -root &
+log "Mouse unclutter"
 
 # --- 4) Start Chromium in kiosk mode ---
 log "Starting Chromium in kiosk mode with URL: $URL"
