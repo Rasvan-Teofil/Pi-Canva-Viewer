@@ -55,7 +55,7 @@ Ggf. Neustart:
 Ein mögliches Projekt-Layout (Pfade nach Wunsch anpassbar):
 
     .
-    ├── kiosk_start.sh          # Hauptskript für den Kioskmodus
+    ├── start_canva.sh          # Hauptskript für den Kioskmodus
     ├── canva_url.txt           # Textdatei mit der Canva-Präsentations-URL
     ├── start_canva.service     # systemd-Service (i.d.R. unter /etc/systemd/system)
     └── README.md               # Diese README
@@ -68,13 +68,13 @@ Ein mögliches Projekt-Layout (Pfade nach Wunsch anpassbar):
 
 ## Anwendung
 
-### 1. Kiosk-Skript erstellen
+### 1. Kiosk-Skript einrichten
 
-Erstelle z. B. `/home/pi/kiosk_start.sh` (ausführbar machen mit `chmod +x`), das Chromium im Kioskmodus startet, auf das sichtbare Fenster wartet und mithilfe von `xdotool` Vollbild und Autoplay in Canva aktiviert.
+Die Datei `.../start_canva.sh` ausführbar machen mit `chmod +x`
 
 ### 2. URL-Datei erstellen
 
-Erstelle `canva_url.txt` in `/home/pi` (oder einem anderen Verzeichnis) und trage dort deine Canva-URL ein, z. B.:
+Füge in  `canva_url.txt` deine Canva-URL ein, z. B.:
 
     https://www.canva.com/design/EXAMPLE_LINK
 
@@ -84,7 +84,7 @@ Erstelle `canva_url.txt` in `/home/pi` (oder einem anderen Verzeichnis) und trag
 
 Um das Skript beim Booten auszuführen, kann ein `systemd`-Service eingerichtet werden.
 
-1. Service-Datei (z. B. `/etc/systemd/system/start_canva.service`) mit folgendem Inhalt erstellen:
+1. Service-Datei (z. B. `/etc/systemd/system/start_canva.service`) mit folgendem Inhalt erstellen bzw. aus dem `start_canva.service` file des repos kopieren:
 
        [Unit]
        Description=Canva Kiosk Service
