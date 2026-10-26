@@ -1,0 +1,179 @@
+{
+  "device": {
+    "id": "pi-celebration-left",
+    "name": "Celebration Space – Links",
+    "location": "ICF Heilbronn · Celebration Space (HDMI 1)",
+    "church_name": "ICF Heilbronn"
+  },
+  "display": {
+    "mode": "dashboard",
+    "reload_token": 1,
+    "show_clock": true,
+    "show_rotation_progress": true,
+    "rotation": {
+      "enabled_modes": [
+        "canva",
+        "dashboard",
+        "verse"
+      ],
+      "durations_sec": {
+        "canva": 180,
+        "dashboard": 60,
+        "verse": 45
+      }
+    }
+  },
+  "canva": {
+    "url": "https://www.canva.com/design/DAGg9nZyL2Y/LG_XWtXLE4tpv9uMccc18Q/edit",
+    "embed_url": "https://www.canva.com/design/DAGg9nZyL2Y/LG_XWtXLE4tpv9uMccc18Q/view?embed",
+    "title": "ICF Heilbronn – Celebration & Info Loop",
+    "use_xdotool_autoplay": true
+  },
+  "verse_of_the_week": {
+    "title": "Vers der Woche",
+    "week_label": "KW 44 · Oktober / November 2026",
+    "text": "Denn Gott hat uns nicht gegeben den Geist der Furcht, sondern der Kraft und der Liebe und der Besonnenheit.",
+    "reference": "2. Timotheus 1,7 (LUT)",
+    "impulse": "Mutig vorangehen im Alltag, im Studium und im Space: Du bist nicht allein unterwegs – Gottes Geist rüstet dich mit Kraft, Liebe und klarem Fokus aus.",
+    "accent_color": "#f59e0b"
+  },
+  "tasks": [
+    {
+      "id": "task-1",
+      "title": "SumUp: Used Food mit Bild hinterlegen",
+      "category": "Gastro & Check-In",
+      "status": "todo",
+      "priority": "high",
+      "assignee": "Gastro Team",
+      "due": "Vor nächster Celebration"
+    },
+    {
+      "id": "task-2",
+      "title": "Stairville DMX 4 Ch. Dimmer installieren",
+      "category": "Production & Licht",
+      "status": "in_progress",
+      "priority": "high",
+      "assignee": "Tech / Teo",
+      "due": "Freitag Setup"
+    },
+    {
+      "id": "task-3",
+      "title": "Sunday Night 29.11. – Flyer am Bildungscampus verteilen",
+      "category": "Outreach & Promo",
+      "status": "todo",
+      "priority": "high",
+      "assignee": "Youth & Young Adults",
+      "due": "18.11. – 25.11."
+    },
+    {
+      "id": "task-4",
+      "title": "Beleuchtung Celebration Space prüfen & Szenen speichern",
+      "category": "Production & Licht",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignee": "Lighting Team",
+      "due": "Sonntag 09:15 Uhr"
+    },
+    {
+      "id": "task-5",
+      "title": "Technik für Pre-Hangout & Gaming-Stationen zusammenstellen",
+      "category": "Event & Stage",
+      "status": "todo",
+      "priority": "medium",
+      "assignee": "Sunday Night Crew",
+      "due": "Bis 28.11."
+    },
+    {
+      "id": "task-6",
+      "title": "Raspberry Pi Screen-Loop & HDMI-CEC im Space einrichten",
+      "category": "IT & Digital Signage",
+      "status": "in_progress",
+      "priority": "medium",
+      "assignee": "Teo",
+      "due": "Aktueller Sprint"
+    },
+    {
+      "id": "task-7",
+      "title": "SumUp Terminal für Youth / Friendsgiving testen",
+      "category": "Youth & Gastro",
+      "status": "done",
+      "priority": "low",
+      "assignee": "Youth Team",
+      "due": "Erledigt"
+    }
+  ],
+  "events": [
+    {
+      "id": "evt-1",
+      "title": "ICF Celebration",
+      "date_label": "Jeden Sonntag · 10:30 Uhr",
+      "subtitle": "Welcome Area & Coffee ab 10:00 Uhr",
+      "badge": "Weekly"
+    },
+    {
+      "id": "evt-2",
+      "title": "ICF Youth – Friendsgiving",
+      "date_label": "Freitag, 27.11. · 19:00 Uhr",
+      "subtitle": "Dinner, Community & Worship im Space",
+      "badge": "Youth"
+    },
+    {
+      "id": "evt-3",
+      "title": "Sunday Night – Glaube im echten Leben",
+      "date_label": "Sonntag, 29.11. · 18:00 Pre-Hangout",
+      "subtitle": "19:00 Service Start · Special Guest & Games",
+      "badge": "Highlight"
+    }
+  ],
+  "tv_power": {
+    "cec_address": "0",
+    "hdmi_port": 1,
+    "auto_active_source_on_wake": true,
+    "schedule": {
+      "enabled": true,
+      "off_time": "22:30",
+      "on_time": "08:00",
+      "active_days": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    "last_action": "HDMI-CEC Initialized (Auto-Schedule 22:30 -> 08:00)",
+    "last_action_time": "2026-10-26 15:11:15",
+    "simulated_state": "on",
+    "last_power_state": "on"
+  },
+  "notion": {
+    "enabled": false,
+    "database_id": "c19003181cd6401c976e2d94a68a0561",
+    "last_sync": null
+  },
+  "pi_fleet": [
+    {
+      "id": "pi-local",
+      "name": "Celebration Space – Links (Dieser Pi)",
+      "location": "Bühne Links · 65\" Samsung TV",
+      "host": "http://127.0.0.1:8080",
+      "is_local": true
+    },
+    {
+      "id": "pi-celebration-right",
+      "name": "Celebration Space – Rechts",
+      "location": "Bühne Rechts · 65\" Samsung TV",
+      "host": "http://raspberrypi-right.local:8080",
+      "is_local": false
+    },
+    {
+      "id": "pi-welcome",
+      "name": "Welcome Area & Café",
+      "location": "Foyer / Check-In · 55\" TV",
+      "host": "http://raspberrypi-welcome.local:8080",
+      "is_local": false
+    }
+  ]
+}

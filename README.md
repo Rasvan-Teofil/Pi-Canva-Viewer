@@ -1,170 +1,155 @@
-# Raspberry Pi Canva Kiosk
+# Raspberry Pi Canva Kiosk & ICF Church Screen Manager
 
-Dieses Projekt automatisiert das Starten einer [Canva](https://www.canva.com/) Präsentation im Vollbild-Kioskmodus auf einem Raspberry Pi direkt nach dem Booten. Dabei kommen folgende Komponenten zum Einsatz:
-
-- **Chromium** als Browser  
-- **xdotool** zum automatisierten Senden von Tastatur- und Mausbefehlen  
-- **systemd** zum automatischen Starten des Kiosk-Skripts beim Booten  
-
-## Inhaltsverzeichnis
-
-1. [Voraussetzungen](#voraussetzungen)  
-2. [Installation](#installation)  
-3. [Dateistruktur](#dateistruktur)  
-4. [Anwendung](#anwendung)  
-5. [Automatischer Start](#automatischer-start)  
-6. [Problemlösung](#problemlösung)  
-7. [Lizenz](#lizenz)  
-8. [Autor](#autor)
+Dieses Projekt automatisiert die Anzeige von **Canva-Präsentationen (Keynotes)**, einem **Church- & Volunteer-Aufgaben-Dashboard** sowie dem **Vers der Woche** im Vollbild-Kioskmodus auf einem oder mehreren Raspberry Pis – inklusive **zentraler Web-Steuerung (Multi-Pi Control Center)** und **automatischer TV-Power-Steuerung (Nachtabschaltung & Auto-Wakeup) über HDMI-CEC**.
 
 ---
 
-## Voraussetzungen
+## ✨ Features im Überblick
 
-- Raspberry Pi mit Raspberry Pi OS (inkl. Desktop)  
-- HDMI-Monitor (oder anderes kompatibles Display)  
-- Netzwerkverbindung (LAN oder WLAN)  
-- Maus und Tastatur für die Erstkonfiguration  
+1. **4 Live-Anzeige-Modi (ohne Neustart umschaltbar):**
+   - 🎞️ **Canva Keynote:** Zeigt eine konfigurierbare Canva-Präsentation im Vollbild (per Embed-View oder klassisch mit `xdotool` Autoplay-Steuerung).
+   - 🧩 **Church Dashboard (ICF Heilbronn):** Kontrastreiches Dark-Mode-Dashboard für 65"-TVs im Space mit offenen **Church- & Volunteer-Aufgaben** (lokal pflegbar oder per **Notion-API Sync** aus `[🧩 Volunteer Aufgaben]`), **Vers der Woche Widget**, **Kommenden Events** (*Sunday Night*, *Youth Friendsgiving*, *Celebration*) und Live-Uhrzeit.
+   - 📖 **Vers der Woche (Fullscreen Slide):** Ruhige, großformatige Vollbild-Ansicht mit Bibelvers, Bibelstelle und kurzem Wochen-Impuls.
+   - 🔄 **Auto-Rotation (Playlist / Mix):** Wechselt automatisch in einstellbaren Zeitintervallen zwischen Canva-Keynote, Church-Dashboard und Vers der Woche (inkl. Fortschrittsbalken).
 
-Zusätzlich sollte man haben:
+2. **Web-Control-Panel & Multi-Pi Management (`/admin`):**
+   - Übersicht und Steuerung **einzelner Raspberry Pis** (z. B. *Celebration Space Links*, *Celebration Space Rechts*, *Welcome Area*) oder **aller Pis gleichzeitig (Broadcast)**.
+   - Live-Umschalten des Anzeige-Modus vom Smartphone oder Laptop im Netzwerk.
+   - Direktes Bearbeiten von Canva-URL (synchronisiert automatisch mit `canva_url.txt`), Vers der Woche und Volunteer-Aufgaben im Browser.
+   - **Zero-Dependency Python 3 Server:** Läuft direkt mit der Python-Standardbibliothek (`python3 app.py`) ohne `pip`- oder `venv`-Zwang (kompatibel mit Raspberry Pi OS Bookworm/Trixie PEP 668).
 
-- Grundkenntnisse in der Linux-Kommandozeile  
-- Sudo-Berechtigungen auf dem Raspberry Pi  
-
----
-
-## Installation
-
-### 1. System aktualisieren
-
-    sudo apt-get update
-    sudo apt-get upgrade -y
-
-Ggf. Neustart:
-
-    sudo reboot
-
-### 2. Benötigte Pakete installieren
-
-    sudo apt-get install -y chromium-browser xdotool
+3. **TV-Powerhandling über HDMI-CEC (`cec-client` / `cec-ctl`):**
+   - **Automatische Nachtabschaltung (Night Schedule):** Schaltet die angeschlossenen Fernseher abends (Standard: `22:30 Uhr`) automatisch per HDMI-CEC (`standby 0`) in den Standby und weckt sie morgens (Standard: `08:00 Uhr`) per `on 0` + `as` (Active Source) wieder auf.
+   - **Manuelle Sofort-Steuerung:** Jederzeit per Button im Admin-UI, per REST-API (`POST /api/tv/power`) oder per CLI-Skript (`./scripts/tv_cec_power.sh on|standby|active|status`).
 
 ---
 
-## Dateistruktur
+## 📂 Dateistruktur
 
-Ein mögliches Projekt-Layout (Pfade nach Wunsch anpassbar):
-
-    .
-    ├── start_canva.sh          # Hauptskript für den Kioskmodus
-    ├── canva_url.txt           # Textdatei mit der Canva-Präsentations-URL
-    ├── start_canva.service     # systemd-Service (i.d.R. unter /etc/systemd/system)
-    └── README.md               # Diese README
-
-> **Hinweis**:  
-> - Oft wird `start_canva.service` nach `/etc/systemd/system/` kopiert.  
-> - Pfade entsprechend der eigenen Umgebung anpassen.
-
----
-
-## Anwendung
-
-### 1. Kiosk-Skript einrichten
-
-Die Datei `.../start_canva.sh` ausführbar machen mit `chmod +x`
-
-### 2. URL-Datei erstellen
-
-Füge in  `canva_url.txt` deine Canva-URL ein, z. B.:
-
-    https://www.canva.com/design/EXAMPLE_LINK
-
----
-
-## Automatischer Start
-
-Um das Skript beim Booten auszuführen, kann ein `systemd`-Service eingerichtet werden.
-
-1. Service-Datei (z. B. `/etc/systemd/system/start_canva.service`) mit folgendem Inhalt erstellen bzw. aus dem `start_canva.service` file des repos kopieren:
-
-       [Unit]
-       Description=Canva Kiosk Service
-       After=display-manager.service
-       Requires=display-manager.service
-
-       [Service]
-       User=pi
-       Environment=DISPLAY=:0
-       Environment=XAUTHORITY=/home/pi/.Xauthority
-       WorkingDirectory=/home/pi
-       ExecStart=/home/pi/kiosk_start.sh
-       Restart=on-failure
-       RestartSec=10
-       KillMode=none
-       RemainAfterExit=yes
-       StandardOutput=journal
-       StandardError=journal
-
-       [Install]
-       WantedBy=graphical.target
-
-   Benutzername, Pfade usw. ggf. anpassen.
-
-2. Systemd neu laden und Service aktivieren:
-
-       sudo systemctl daemon-reload
-       sudo systemctl enable start_canva.service
-
-3. Service starten (Test):
-
-       sudo systemctl start start_canva.service
-
-4. Status und Logs überprüfen:
-
-       sudo systemctl status start_canva.service
-       sudo journalctl -u start_canva.service
-
-Wenn alles funktioniert, öffnet sich beim Booten Chromium im Kioskmodus und lädt automatisch die angegebene Canva-Präsentation.
-
----
-
-## Problemlösung
-
-1. **Chromium startet nicht**  
-   - Prüfen, ob `chromium-browser` installiert ist.  
-   - Skript ausführbar (`chmod +x`) und Pfade in der Service-Datei korrekt?
-
-2. **Vollbildmodus funktioniert nicht**  
-   - `xdotool` installiert?  
-   - `DISPLAY=:0` und `XAUTHORITY=/home/pi/.Xauthority` für den richtigen Nutzer setzen.
-
-3. **Mausklicks nicht korrekt**  
-   - Koordinaten im Skript an Bildschirmauflösung oder Canva-UI anpassen.
-
-4. **Service startet nicht beim Booten**  
-   - Journallogs checken: `sudo journalctl -u start_canva.service`  
-   - `WantedBy=graphical.target` und Boot in den grafischen Modus sicherstellen.
-
----
-
-## Lizenz
-
-*(Hier kann eine passende Lizenz eingefügt oder dieser Abschnitt entfernt werden. Beispiel:)*
-
-    MIT License
-
-    Copyright (c) 2025
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    ...
-
----
-
-## Autor
-
-- **Teofil Wetzel** – *Initial work*
-
-Fragen und Feedback bitte per Issue oder Pull-Request einreichen.
-
-**Viel Erfolg mit deinem automatisierten Canva-Kiosk auf dem Raspberry Pi!**
+```text
+.
+├── app.py                        # Python 3 HTTP/REST Kiosk- & Management-Server (Port 8080)
+├── config/
+│   └── dashboard_data.json       # Konfiguration: Modus, Aufgaben, Vers der Woche, TV-Zeitplan, Pi-Fleet
+├── modules/
+│   ├── config_manager.py         # Lädt/speichert JSON-Config & hält canva_url.txt synchron
+│   ├── tv_power.py               # HDMI-CEC Steuerung (cec-client/cec-ctl/vcgencmd) & NightPowerScheduler
+│   ├── notion_sync.py            # Optionaler Live-Sync mit Notion-Datenbank [🧩 Volunteer Aufgaben]
+│   └── pi_fleet.py               # Multi-Pi Statusabfrage & Remote-Befehlsverteilung
+├── templates/
+│   ├── display.html              # Vollbild-TV-Ansicht (/display) für 65"-Screens
+│   └── admin.html                # Web-Control-Panel (/admin) zur Steuerung aller Pis & Inhalte
+├── static/
+│   ├── css/                      # Dark-Mode Stylesheets für TV-Display & Admin-Panel
+│   └── js/                       # Live-Polling, Rotations-Timer & Admin-Steuerungslogik
+├── scripts/
+│   └── tv_cec_power.sh           # Standalone HDMI-CEC Skript (on | standby | active | status)
+├── canva_url.txt                 # Textdatei mit der Canva-Präsentations-URL
+├── start_canva.sh                # Autostart-Skript für Kiosk-Browser, CEC-Wakeup & Server
+├── start_canva.service           # systemd-Service für den grafischen Chromium-Kiosk
+├── pi_kiosk_server.service       # systemd-Service für den Hintergrund-Web- & CEC-Server
+└── README.md                     # Dokumentation
 ```
+
+---
+
+## 🚀 Installation auf dem Raspberry Pi
+
+### 1. System aktualisieren & Pakete installieren
+
+```bash
+sudo apt-get update
+sudo apt-get install -y python3 chromium-browser xdotool unclutter cec-utils
+```
+
+*Hinweis:* `cec-utils` stellt `cec-client` bereit, womit der Raspberry Pi den Fernseher direkt über das HDMI-Kabel ein- und ausschalten kann.
+
+### 2. Server & Kiosk testen
+
+```bash
+chmod +x start_canva.sh scripts/tv_cec_power.sh app.py
+python3 app.py --port 8080
+```
+
+Anschließend im Browser erreichbar:
+- **TV Fullscreen-Ansicht (Kiosk):** `http://<pi-ip>:8080/display` (oder mit Modus-Parameter `?mode=dashboard`, `?mode=verse`, `?mode=canva`, `?mode=rotation`)
+- **Admin & Multi-Pi Control Center:** `http://<pi-ip>:8080/admin`
+
+---
+
+## ⚙️ Automatischer Start beim Booten (systemd)
+
+Kopiere die Service-Dateien nach `/etc/systemd/system/` (Benutzername/Pfade bei Bedarf anpassen):
+
+```bash
+sudo cp pi_kiosk_server.service /etc/systemd/system/
+sudo cp start_canva.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable pi_kiosk_server.service start_canva.service
+sudo systemctl start pi_kiosk_server.service start_canva.service
+```
+
+In `start_canva.sh` kann über die Umgebungsvariable `KIOSK_MODE` gewählt werden:
+- `KIOSK_MODE="hub"` *(Standard)*: Öffnet `http://localhost:8080/display` für nahtloses Live-Umschalten zwischen Canva Keynote, Church Dashboard, Vers der Woche und Auto-Rotation.
+- `KIOSK_MODE="classic_canva"`: Öffnet direkt die URL aus `canva_url.txt` und führt die klassische `xdotool`-Tastatur-/Maus-Sequenz (`Ctrl+Alt+P` + Autoplay-Klick) aus.
+
+---
+
+## 📺 TV-Powerhandling (HDMI-CEC) & Samsung Hospitality Mode
+
+### 1. HDMI-CEC Befehle (CLI & API)
+
+Über das mitgelieferte Skript `scripts/tv_cec_power.sh` oder über das Admin-Panel (`/admin`) lassen sich die TVs jederzeit steuern:
+
+```bash
+# TV einschalten und Raspberry Pi als aktive HDMI-Quelle setzen
+./scripts/tv_cec_power.sh on
+
+# TV nachts in den Standby schicken
+./scripts/tv_cec_power.sh standby
+
+# HDMI-Eingang des Pi erzwingen (Active Source)
+./scripts/tv_cec_power.sh active
+
+# Aktuellen TV-Powerstatus per CEC abfragen
+./scripts/tv_cec_power.sh status
+```
+
+Der integrierte `NightPowerScheduler` in `app.py` prüft automatisch die konfigurierte Uhrzeit in `config/dashboard_data.json` (Standard: **22:30 Uhr Standby**, **08:00 Uhr Wakeup**) und schaltet den Bildschirm nachts stromsparend aus.
+
+### 2. Samsung TV Hospitality Mode (Verhindert Samsung TV Plus beim Start!)
+
+Damit ein Samsung Smart-TV (z. B. 65" im Celebration Space) beim Einschalten **garantiert auf HDMI 1** startet und niemals ins langsame Tizen-Menü oder *Samsung TV Plus* wechselt:
+
+1. Am eingeschalteten Samsung TV auf einer klassischen IR-Fernbedienung nacheinander drücken:
+   **`Mute` → `1` → `1` → `9` → `Enter` (OK)**
+2. Im versteckten **Hospitality Mode Menü** folgende Werte setzen:
+   - **Hospitality Mode:** `Standalone` / `ON`
+   - **Power On Source:** `HDMI 1` (der Port, an dem der Raspberry Pi hängt)
+   - **Power On Option:** `Power On` (startet sofort bei Stromzufuhr)
+   - **Anynet+ (HDMI-CEC):** `ON`
+3. TV einmal neu starten – ab sofort landet der Fernseher nach jedem Einschalten direkt auf dem Raspberry Pi Signal.
+
+---
+
+## 🔌 REST-API Endpunkte (Auswahl)
+
+| Methode | Pfad | Beschreibung |
+| :--- | :--- | :--- |
+| `GET` | `/api/state` | Liefert kompletten aktuellen Zustand (Modus, Aufgaben, Vers, Events, TV-Power, Fleet) |
+| `POST` | `/api/display/mode` | Setzt den Modus (`canva`, `dashboard`, `verse`, `rotation`) & Rotationsintervalle |
+| `POST` | `/api/display/reload` | Löst einen sofortigen Reload auf dem TV-Screen aus |
+| `POST` | `/api/canva` | Aktualisiert die Canva-URL (und schreibt sie in `canva_url.txt`) |
+| `POST` | `/api/verse` | Aktualisiert den Vers der Woche (`text`, `reference`, `impulse`, `week_label`) |
+| `POST` | `/api/tasks` | Aufgaben verwalten (`action`: `add`, `toggle`, `update`, `delete`) |
+| `POST` | `/api/notion/sync` | Synchronisiert Aufgaben live aus Notion (`NOTION_TOKEN` + `database_id`) |
+| `POST` | `/api/tv/power` | Führt HDMI-CEC Befehl aus (`action`: `on`, `standby`, `active-source`, `status`) |
+| `POST` | `/api/tv/schedule` | Speichert den Zeitplan für die automatische Nachtabschaltung (`off_time`, `on_time`) |
+| `GET` | `/api/fleet/status` | Prüft den Live-Status aller registrierten Raspberry Pis im Space |
+| `POST` | `/api/fleet/command` | Sendet Befehle gezielt an einen Pi oder per Broadcast (`target: "all"`) an alle Pis |
+
+---
+
+## 👤 Autor
+
+- **Teofil Wetzel** – *Initial work & ICF Heilbronn Screen Architecture*

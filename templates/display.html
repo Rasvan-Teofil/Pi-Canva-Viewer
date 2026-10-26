@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ICF Heilbronn – Screen Display</title>
+  <link rel="stylesheet" href="/static/css/display.css" />
+</head>
+<body>
+  <!-- Top Status / Header Bar (hidden in pure Canva fullscreen unless rotating) -->
+  <header id="top-bar" class="top-bar">
+    <div class="brand-group">
+      <div class="brand-logo">ICF</div>
+      <div class="brand-text">
+        <span id="church-name" class="church-title">ICF HEILBRONN</span>
+        <span id="device-location" class="device-subtitle">Celebration Space · Screen</span>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <span id="mode-pill" class="mode-pill">CHURCH DASHBOARD</span>
+      <span id="tv-power-pill" class="power-pill power-on">HDMI-CEC: ON</span>
+    </div>
+
+    <div class="clock-group">
+      <div id="live-clock" class="live-clock">15:00</div>
+      <div id="live-date" class="live-date">Montag, 26.10.2026</div>
+    </div>
+  </header>
+
+  <!-- VIEW 1: CANVA KEYNOTE FULLSCREEN -->
+  <main id="view-canva" class="screen-view hidden">
+    <iframe
+      id="canva-iframe"
+      class="canva-frame"
+      src="about:blank"
+      allowfullscreen="allowfullscreen"
+      allow="fullscreen; autoplay"
+    ></iframe>
+    <div id="canva-floating-badge" class="canva-floating-badge">
+      <span>🎞️ Canva Keynote</span>
+      <span id="canva-title-label">ICF Heilbronn – Info Loop</span>
+    </div>
+  </main>
+
+  <!-- VIEW 2: CHURCH & VOLUNTEER DASHBOARD -->
+  <main id="view-dashboard" class="screen-view">
+    <div class="dashboard-grid">
+      <!-- Left Column: Church & Volunteer Tasks -->
+      <section class="panel tasks-panel">
+        <div class="panel-header">
+          <div>
+            <span class="eyebrow">TEAM &amp; SPACE OPERATIONS</span>
+            <h2>🧩 Church &amp; Volunteer Aufgaben</h2>
+          </div>
+          <div id="task-counters" class="task-counters">
+            <span class="counter-chip todo">0 Offen</span>
+            <span class="counter-chip progress">0 In Arbeit</span>
+            <span class="counter-chip done">0 Erledigt</span>
+          </div>
+        </div>
+
+        <div id="tasks-container" class="tasks-list">
+          <!-- Populated dynamically via display.js -->
+        </div>
+      </section>
+
+      <!-- Right Column: Verse of the Week + Upcoming Events -->
+      <div class="right-column">
+        <section class="panel verse-card-panel">
+          <div class="panel-header compact">
+            <span class="eyebrow gold-text" id="dash-verse-week">VERS DER WOCHE</span>
+            <span class="verse-ref-badge" id="dash-verse-ref">2. Timotheus 1,7</span>
+          </div>
+          <blockquote id="dash-verse-text" class="dash-verse-quote">
+            „Denn Gott hat uns nicht gegeben den Geist der Furcht, sondern der Kraft und der Liebe und der Besonnenheit.“
+          </blockquote>
+          <p id="dash-verse-impulse" class="dash-verse-impulse">
+            Mutig vorangehen im Alltag, im Studium und im Space.
+          </p>
+        </section>
+
+        <section class="panel events-panel">
+          <div class="panel-header compact">
+            <div>
+              <span class="eyebrow">SAVE THE DATE</span>
+              <h2>📅 Kommende Events &amp; Zeiten</h2>
+            </div>
+          </div>
+          <div id="events-container" class="events-list">
+            <!-- Populated dynamically via display.js -->
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- VIEW 3: VERSE OF THE WEEK FULLSCREEN SLIDE -->
+  <main id="view-verse" class="screen-view hidden">
+    <div class="verse-full-container">
+      <div class="verse-full-card">
+        <div class="verse-full-top">
+          <span class="verse-tag" id="full-verse-title">📖 VERS DER WOCHE</span>
+          <span class="verse-week" id="full-verse-week">KW 44 · ICF HEILBRONN</span>
+        </div>
+        <blockquote class="verse-full-quote" id="full-verse-text">
+          „Denn Gott hat uns nicht gegeben den Geist der Furcht, sondern der Kraft und der Liebe und der Besonnenheit.“
+        </blockquote>
+        <div class="verse-full-reference" id="full-verse-ref">2. Timotheus 1,7 (LUT)</div>
+        <div class="verse-full-divider"></div>
+        <p class="verse-full-impulse" id="full-verse-impulse">
+          Mutig vorangehen im Alltag, im Studium und im Space: Du bist nicht allein unterwegs – Gottes Geist rüstet dich mit Kraft, Liebe und klarem Fokus aus.
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Rotation Footer Bar -->
+  <footer id="rotation-bar" class="rotation-bar hidden">
+    <div class="rotation-info">
+      <span id="rotation-status-text">🔄 Auto-Rotation aktiv</span>
+    </div>
+    <div class="rotation-progress-track">
+      <div id="rotation-progress-fill" class="rotation-progress-fill"></div>
+    </div>
+  </footer>
+
+  <script src="/static/js/display.js"></script>
+</body>
+</html>

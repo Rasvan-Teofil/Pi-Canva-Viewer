@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ICF Heilbronn – Pi Screen &amp; CEC Manager</title>
+  <link rel="stylesheet" href="/static/css/admin.css" />
+</head>
+<body>
+  <header class="admin-header">
+    <div class="header-left">
+      <div class="logo-badge">ICF</div>
+      <div>
+        <h1>Pi Screen &amp; TV Control Center</h1>
+        <p id="header-subtitle">ICF Heilbronn · Digital Signage, Church Dashboard &amp; HDMI-CEC</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="/display" target="_blank" class="btn btn-secondary">🖥️ TV-Ansicht öffnen (/display)</a>
+      <button id="btn-reload-display" class="btn btn-primary">🔄 Display neu laden</button>
+    </div>
+  </header>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <main class="admin-container">
+    <!-- 1. ANZEIGE-MODUS & ROTATION -->
+    <section class="card full-width">
+      <div class="card-header">
+        <div>
+          <span class="badge-tag">LIVE AUF DEM SCREEN</span>
+          <h2>🎛️ Anzeige-Modus wählen (Dieser Pi &amp; Space)</h2>
+        </div>
+        <div class="target-selector">
+          <label for="command-target">Ziel-Gerät:</label>
+          <select id="command-target">
+            <option value="pi-local">Dieser Pi (Lokal)</option>
+            <option value="all">🌐 Alle Pis im Space (Broadcast)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mode-grid">
+        <button class="mode-card" data-mode="canva">
+          <span class="mode-icon">🎞️</span>
+          <span class="mode-title">Canva Keynote</span>
+          <span class="mode-desc">Vollbild-Präsentation / Info-Loop aus Canva</span>
+        </button>
+
+        <button class="mode-card" data-mode="dashboard">
+          <span class="mode-icon">🧩</span>
+          <span class="mode-title">Church Dashboard</span>
+          <span class="mode-desc">Volunteer-Aufgaben, Vers der Woche &amp; Events</span>
+        </button>
+
+        <button class="mode-card" data-mode="verse">
+          <span class="mode-icon">📖</span>
+          <span class="mode-title">Vers der Woche</span>
+          <span class="mode-desc">Fokussierte Vollbild-Slide mit Bibelvers &amp; Impuls</span>
+        </button>
+
+        <button class="mode-card" data-mode="rotation">
+          <span class="mode-icon">🔄</span>
+          <span class="mode-title">Auto-Rotation (Mix)</span>
+          <span class="mode-desc">Wechselt automatisch zwischen Keynote, Dashboard &amp; Vers</span>
+        </button>
+      </div>
+
+      <div class="rotation-settings-bar">
+        <div class="rot-group">
+          <label>🎞️ Canva Dauer (Sek.)</label>
+          <input type="number" id="rot-canva" min="5" max="3600" value="180" />
+        </div>
+        <div class="rot-group">
+          <label>🧩 Dashboard Dauer (Sek.)</label>
+          <input type="number" id="rot-dashboard" min="5" max="3600" value="60" />
+        </div>
+        <div class="rot-group">
+          <label>📖 Vers Dauer (Sek.)</label>
+          <input type="number" id="rot-verse" min="5" max="3600" value="45" />
+        </div>
+        <button id="btn-save-rotation" class="btn btn-secondary">⏱️ Intervalle speichern</button>
+      </div>
+    </section>
+
+    <!-- 2. MULTI-PI FLEET MANAGEMENT & HDMI-CEC TV POWER -->
+    <div class="two-col-grid">
+      <!-- Multi-Pi Fleet -->
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <span class="badge-tag">MULTI-PI MANAGEMENT</span>
+            <h2>📡 Raspberry Pis im Space</h2>
+          </div>
+          <button id="btn-refresh-fleet" class="btn btn-sm">🔄 Status prüfen</button>
+        </div>
+
+        <div id="fleet-list" class="fleet-list">
+          <!-- Populated dynamically -->
+        </div>
+
+        <details class="add-node-details">
+          <summary>➕ Weiteren Raspberry Pi hinzufügen</summary>
+          <div class="form-grid compact-top">
+            <input type="text" id="new-pi-name" placeholder="Name (z.B. Youth Corner)" />
+            <input type="text" id="new-pi-loc" placeholder="Standort (z.B. 55 Zoll TV)" />
+            <input type="text" id="new-pi-host" placeholder="URL (z.B. http://192.168.178.52:8080)" />
+            <button id="btn-add-pi" class="btn btn-primary">Pi registrieren</button>
+          </div>
+        </details>
+      </section>
+
+      <!-- TV Power & HDMI-CEC Night Schedule -->
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <span class="badge-tag gold">HDMI-CEC &amp; POWER</span>
+            <h2>📺 TV-Steuerung &amp; Nachtabschaltung</h2>
+          </div>
+          <span id="tv-status-badge" class="status-pill on">TV: ON</span>
+        </div>
+
+        <p class="card-help">
+          Steuert den angeschlossenen Fernseher direkt über das HDMI-Kabel via <code>cec-client</code> (Anynet+ / HDMI-CEC) inkl. Fallback auf <code>vcgencmd</code> &amp; DPMS.
+        </p>
+
+        <div class="power-btn-row">
+          <button class="btn btn-success" data-power="on">🟢 TV Einschalten (CEC ON + HDMI)</button>
+          <button class="btn btn-danger" data-power="standby">🌙 TV Ausschalten (Standby)</button>
+          <button class="btn btn-secondary" data-power="active-source">🔌 HDMI-Quelle erzwingen</button>
+        </div>
+
+        <div class="schedule-box">
+          <div class="schedule-header">
+            <label class="toggle-label">
+              <input type="checkbox" id="sched-enabled" checked />
+              <span><strong>Automatische Nachtabschaltung aktiv</strong></span>
+            </label>
+          </div>
+          <div class="schedule-inputs">
+            <div>
+              <label>🌙 Abends ausschalten (Standby)</label>
+              <input type="time" id="sched-off-time" value="22:30" />
+            </div>
+            <div>
+              <label>☀️ Morgens aufwecken (Wake + HDMI)</label>
+              <input type="time" id="sched-on-time" value="08:00" />
+            </div>
+            <button id="btn-save-schedule" class="btn btn-primary">💾 Zeitplan speichern</button>
+          </div>
+          <p id="tv-last-action" class="meta-note">Letzte Aktion: –</p>
+        </div>
+
+        <details class="hospitality-tip">
+          <summary>💡 Tipp: Samsung TV Hospitality Mode (Kein TV Plus beim Start)</summary>
+          <p>
+            Damit Samsung TVs beim Einschalten <strong>sofort HDMI 1</strong> zeigen und niemals ins langsame Tizen Smart-Hub oder Samsung TV Plus wechseln:
+            Auf der klassischen IR-Fernbedienung <code>Mute → 1 → 1 → 9 → Enter</code> drücken → <strong>Hospitality Mode: ON</strong> → <strong>Power On Source: HDMI 1</strong> → <strong>Power On Option: Power On</strong>.
+          </p>
+        </details>
+      </section>
+    </div>
+
+    <!-- 3. CHURCH AUFGABEN & VERS DER WOCHE -->
+    <div class="two-col-grid">
+      <!-- Church / Volunteer Tasks -->
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <span class="badge-tag">CHURCH BOARD</span>
+            <h2>🧩 Volunteer &amp; Space Aufgaben</h2>
+          </div>
+          <button id="btn-notion-sync" class="btn btn-sm btn-accent">🔄 Notion Sync</button>
+        </div>
+
+        <div class="task-add-form">
+          <input type="text" id="task-title" placeholder="Neue Aufgabe (z.B. SumUp: Used Food mit Bild hinterlegen)" />
+          <div class="task-form-row">
+            <input type="text" id="task-category" placeholder="Bereich (z.B. Production & Licht)" />
+            <input type="text" id="task-assignee" placeholder="Verantwortlich (z.B. Tech / Teo)" />
+            <input type="text" id="task-due" placeholder="Frist (z.B. Sonntag 09:30)" />
+            <select id="task-priority">
+              <option value="high">🔥 Hoch</option>
+              <option value="medium" selected>⚡ Mittel</option>
+              <option value="low">🌱 Niedrig</option>
+            </select>
+            <button id="btn-add-task" class="btn btn-primary">➕ Hinzufügen</button>
+          </div>
+        </div>
+
+        <div id="admin-tasks-list" class="admin-tasks-list">
+          <!-- Populated dynamically -->
+        </div>
+      </section>
+
+      <!-- Verse of the Week & Canva Config -->
+      <div class="stacked-column">
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <span class="badge-tag gold">SPIRITUAL INPUT</span>
+              <h2>📖 Vers der Woche bearbeiten</h2>
+            </div>
+          </div>
+          <div class="form-stack">
+            <div class="two-inputs">
+              <div>
+                <label>Wochen-Label / Serie</label>
+                <input type="text" id="verse-week" placeholder="z.B. KW 44 · Sunday Night" />
+              </div>
+              <div>
+                <label>Bibelstelle</label>
+                <input type="text" id="verse-ref" placeholder="z.B. 2. Timotheus 1,7 (LUT)" />
+              </div>
+            </div>
+            <div>
+              <label>Bibelvers (Text)</label>
+              <textarea id="verse-text" rows="3"></textarea>
+            </div>
+            <div>
+              <label>Kurzer Impuls für die Woche</label>
+              <textarea id="verse-impulse" rows="2"></textarea>
+            </div>
+            <button id="btn-save-verse" class="btn btn-primary">💾 Vers der Woche aktualisieren</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <span class="badge-tag">CANVA KEYNOTE</span>
+              <h2>🎞️ Canva Präsentations-URL</h2>
+            </div>
+          </div>
+          <div class="form-stack">
+            <div>
+              <label>Titel der Präsentation</label>
+              <input type="text" id="canva-title" placeholder="ICF Heilbronn – Info Loop" />
+            </div>
+            <div>
+              <label>Canva Design Link (synchronisiert automatisch mit <code>canva_url.txt</code>)</label>
+              <input type="url" id="canva-url" placeholder="https://www.canva.com/design/..." />
+            </div>
+            <div class="btn-row">
+              <button id="btn-save-canva" class="btn btn-primary">💾 Canva-Link speichern</button>
+              <button id="btn-canva-autoplay" class="btn btn-secondary">🖱️ xdotool Autoplay senden</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="/static/js/admin.js"></script>
+</body>
+</html>
