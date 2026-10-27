@@ -12,7 +12,7 @@
       <div class="logo-badge">ICF</div>
       <div>
         <h1>Pi Screen &amp; TV Control Center</h1>
-        <p id="header-subtitle">ICF Heilbronn · Digital Signage, Church Dashboard, Notion Views &amp; HDMI-CEC</p>
+        <p id="header-subtitle">ICF Heilbronn · Digital Signage, Church Dashboard, Notion Views &amp; HDMI-CEC · Zur TV-Ansicht: Ctrl+Alt+S</p>
       </div>
     </div>
     <div class="header-actions">
@@ -303,9 +303,14 @@
               <label>Canva Design Link (synchronisiert automatisch mit <code>canva_url.txt</code>)</label>
               <input type="url" id="canva-url" placeholder="https://www.canva.com/design/..." />
             </div>
+            <label class="toggle-label">
+              <input type="checkbox" id="canva-autoplay-on-load" checked />
+              <span><strong>Canva beim Laden automatisch als Diashow starten</strong><br />
+              <small>Startet im lokalen Kiosk die Canva-Autoplay-Sequenz; der Link wird vorher im Hintergrund geladen.</small></span>
+            </label>
             <div class="btn-row">
               <button id="btn-save-canva" class="btn btn-primary">💾 Canva-Link speichern</button>
-              <button id="btn-canva-autoplay" class="btn btn-secondary">🖱️ xdotool Autoplay senden</button>
+              <button id="btn-canva-autoplay" class="btn btn-secondary">▶ Canva-Diashow jetzt starten</button>
             </div>
           </div>
         </section>

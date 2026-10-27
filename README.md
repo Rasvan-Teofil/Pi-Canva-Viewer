@@ -40,6 +40,12 @@ Der Zeitplan wird beim Booten abgeglichen: Fährt der Pi während der geplanten 
 
 Sobald im Admin-Bereich je ein Canva-Design-Link und eine veröffentlichte Notion-Ansicht hinterlegt sind, lädt die Anzeige beide Embeds bereits im Hintergrund. Mit der linken Pfeiltaste (`←`) wird die Canva-Keynote und mit der rechten Pfeiltaste (`→`) die Notion-Ansicht gezeigt. Der Wechsel erfolgt ausschließlich durch Umschalten der sichtbaren Ansicht: Die iFrames bleiben geladen und die Seiten werden nicht erneut aufgerufen. Eine Änderung im Admin-Bereich oder ein Display-Reload übernimmt wieder die zentral konfigurierte Ansicht.
 
+### Administration direkt am Kiosk und Canva-Diashow
+
+Am angeschlossenen Pi-Keyboard öffnet `Strg` + `Alt` + `A` jederzeit die lokale Administration. Dort lassen sich der Canva-Link und die veröffentlichte Notion-URL direkt ändern. Mit `Strg` + `Alt` + `S` geht es wieder zurück zur TV-Ansicht.
+
+Die Option **„Canva beim Laden automatisch als Diashow starten“** löst nach dem Vorladen im lokalen Chromium-Kiosk die Canva-Autoplay-Sequenz aus. Sie nutzt `xdotool` und deshalb bewusst X11; der Kiosk-Starter startet Chromium entsprechend im X11-Modus. Falls Canva seine Oberfläche grundlegend ändert oder auf dem Pi kein X11 verfügbar ist, bleibt der Embed sichtbar, aber die automatische Diashow muss in Canva einmal manuell gestartet werden.
+
 ### Mehrere Pis
 
 Installiere das Repository auf jedem Pi separat und öffne jeweils dessen eigene Admin-Seite: `http://<IP-DIESES-PI>:8080/admin`. Konfigurationen werden ausschließlich lokal in dessen `config/dashboard_data.json` gespeichert; kein Pi verwaltet oder steuert andere Pis. Damit kann jeder Bildschirm unabhängig eine andere Canva-Präsentation, Notion-Seite und Ein-/Ausschaltzeit erhalten.

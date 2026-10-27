@@ -146,6 +146,7 @@
     const canva = state.canva || {};
     document.getElementById("canva-title").value = canva.title || "";
     document.getElementById("canva-url").value = canva.url || "";
+    document.getElementById("canva-autoplay-on-load").checked = Boolean(canva.use_xdotool_autoplay);
 
     // Tasks list
     renderTasks(state.tasks || []);
@@ -441,6 +442,7 @@
     const res = await apiPost("/api/canva", {
       title: document.getElementById("canva-title").value,
       url: document.getElementById("canva-url").value,
+      use_xdotool_autoplay: document.getElementById("canva-autoplay-on-load").checked,
     });
     if (res.ok) {
       showToast("Canva-URL gespeichert und in canva_url.txt aktualisiert!");
@@ -452,6 +454,13 @@
   document.getElementById("btn-canva-autoplay").addEventListener("click", async () => {
     const res = await apiPost("/api/kiosk/canva-autoplay", {});
     showToast(res.message || res.error || "xdotool Befehl ausgeführt");
+  });
+
+  window.addEventListener("keydown", (event) => {
+    if (event.ctrlKey && event.altKey && event.key.toLowerCase() === "s") {
+      event.preventDefault();
+      window.location.assign("/display");
+    }
   });
 
   document.getElementById("admin-token").value = getAdminToken();

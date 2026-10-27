@@ -49,6 +49,7 @@ while true; do
         --disable-infobars \
         --disable-session-crashed-bubble \
         --no-first-run \
+        --ozone-platform=x11 \
         --autoplay-policy=no-user-gesture-required \
         --user-data-dir="$PROFILE_DIR" \
         "$URL"

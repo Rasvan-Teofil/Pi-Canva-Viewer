@@ -8,6 +8,8 @@
   let rotationIndex = 0;
   let rotationElapsedSec = 0;
   let lastCanvaSrc = "";
+  let loadedCanvaSrc = "";
+  let autoplayStartedForCanvaSrc = "";
   let lastNotionSrc = "";
   let lastDashNotionSrc = "";
   let keyboardMode = null;
@@ -53,6 +55,29 @@
   function focusKeyboardCapture() {
     const capture = document.getElementById("keyboard-capture");
     if (capture) capture.focus({ preventScroll: true });
+  }
+
+  function requestLocalCanvaAutoplay(canvaCfg, source) {
+    if (
+      !canvaCfg.use_xdotool_autoplay ||
+      !source ||
+      loadedCanvaSrc !== source ||
+      currentActiveView !== "canva" ||
+      autoplayStartedForCanvaSrc === source
+    ) return;
+    autoplayStartedForCanvaSrc = source;
+    // This route only accepts the Chromium instance running locally on the Pi.
+    // A laptop opening /display cannot trigger xdotool on the screen.
+    window.setTimeout(() => {
+      fetch("/api/kiosk/local-canva-autoplay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      }).catch(() => {
+        // Autoplay is a kiosk enhancement; the loaded Canva embed remains usable
+        // if xdotool or an X11 desktop is unavailable.
+      });
+    }, 5000);
   }
 
   function getEffectiveMode(state) {
@@ -106,6 +131,10 @@
       "notion-fullscreen",
       viewName === "notion" && !isRotation && notionFullscreen
     );
+    if (viewName === "canva") {
+      const canvaCfg = (appState && appState.canva) || {};
+      requestLocalCanvaAutoplay(canvaCfg, canvaCfg.embed_url || canvaCfg.url || "");
+    }
     focusKeyboardCapture();
   }
 
@@ -127,6 +156,10 @@
     const iframe = document.getElementById("canva-iframe");
     if (embedUrl && embedUrl !== lastCanvaSrc) {
       lastCanvaSrc = embedUrl;
+      iframe.onload = () => {
+        loadedCanvaSrc = embedUrl;
+        requestLocalCanvaAutoplay(canvaCfg, embedUrl);
+      };
       iframe.src = embedUrl;
     }
     document.getElementById("canva-title-label").textContent = canvaCfg.title || "Canva Präsentation";
@@ -307,7 +340,10 @@
 
   updateLocalClock();
   window.addEventListener("keydown", (event) => {
-    if (event.key === "ArrowLeft") {
+    if (event.ctrlKey && event.altKey && event.key.toLowerCase() === "a") {
+      event.preventDefault();
+      window.location.assign("/admin");
+    } else if (event.key === "ArrowLeft") {
       event.preventDefault();
       switchPreloadedView("canva");
     } else if (event.key === "ArrowRight") {

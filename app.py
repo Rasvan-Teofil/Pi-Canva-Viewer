@@ -74,26 +74,38 @@ def valid_web_url(value: Any, *, canva_only: bool = False) -> str | None:
 
 
 def trigger_xdotool_canva_autoplay() -> Dict[str, Any]:
-    """Run the classic xdotool sequence from start_canva.sh to activate Canva fullscreen autoplay."""
+    """Ask the local Chromium kiosk to enter Canva's autoplay presentation mode."""
     if not shutil.which("xdotool"):
         return {"ok": False, "error": "xdotool nicht installiert (nur auf Raspberry Pi Desktop verfügbar)."}
     script = """
     export DISPLAY=:0
+    export XAUTHORITY="${XAUTHORITY:-$HOME/.Xauthority}"
     WIN_ID=$(xdotool search --onlyvisible --class "chromium" 2>/dev/null | head -n 1)
     if [ -n "$WIN_ID" ]; then
         xdotool windowactivate --sync "$WIN_ID"
         sleep 0.5
+        # Canva is embedded in the display shell. Focus the now-visible iframe
+        # first, otherwise the shortcut would be handled by the shell page.
+        read -r WIDTH HEIGHT < <(xdotool getdisplaygeometry 2>/dev/null || echo "1920 1080")
+        xdotool mousemove "$((WIDTH / 2))" "$((HEIGHT / 2))" && xdotool click 1
+        sleep 0.5
         xdotool key --clearmodifiers --delay 100 ctrl+alt+p
         sleep 2
-        xdotool mousemove 1820 1050 && sleep 0.5 && xdotool click 1
+        PRESENT_X=$((WIDTH * 95 / 100))
+        PRESENT_Y=$((HEIGHT * 97 / 100))
+        AUTOPLAY_X=$((WIDTH * 81 / 100))
+        AUTOPLAY_Y=$((HEIGHT * 81 / 100))
+        xdotool mousemove "$PRESENT_X" "$PRESENT_Y" && sleep 0.5 && xdotool click 1
         sleep 0.8
-        xdotool mousemove 1559 872 && sleep 0.5 && xdotool click 1
+        xdotool mousemove "$AUTOPLAY_X" "$AUTOPLAY_Y" && sleep 0.5 && xdotool click 1
         sleep 0.5
         xdotool mousemove 0 0 && xdotool click 1
+    else
+        exit 2
     fi
     """
     subprocess.Popen(["/bin/bash", "-c", script])
-    return {"ok": True, "message": "xdotool Canva-Autoplay Sequenz gestartet."}
+    return {"ok": True, "message": "Canva-Autoplay-Sequenz im lokalen Kiosk gestartet."}
 
 
 def apply_notion_view_update(cfg: Dict[str, Any], body: Dict[str, Any]) -> Dict[str, Any]:
@@ -285,6 +297,19 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
             body = self._read_json_body()
         except Exception as exc:
             self._send_json({"ok": False, "error": f"Ungültiges JSON: {exc}"}, status=400)
+            return
+
+        # The display page running *on this Pi* uses this after its preloaded
+        # Canva iframe finishes loading. It intentionally accepts no remote
+        # callers, so a device elsewhere on the LAN cannot drive the kiosk.
+        if path == "/api/kiosk/local-canva-autoplay":
+            if self.client_address[0] not in ("127.0.0.1", "::1"):
+                self._send_json({"ok": False, "error": "Nur der lokale Kiosk darf Autoplay starten."}, status=403)
+                return
+            if not load_config().get("canva", {}).get("use_xdotool_autoplay", False):
+                self._send_json({"ok": False, "error": "Canva-Autoplay ist in der lokalen Konfiguration deaktiviert."}, status=409)
+                return
+            self._send_json(trigger_xdotool_canva_autoplay())
             return
 
         if not self._require_admin():
