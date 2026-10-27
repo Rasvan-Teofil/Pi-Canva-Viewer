@@ -7,7 +7,7 @@ Zero-dependency Python 3 HTTP + REST server for managing:
 3. Any Published Notion Database / View (Notion Site /ebd/ Embed)
 4. Verse of the Week (Vers der Woche) Fullscreen View
 5. Automatic Playlist / Rotation Mode
-6. Multi-Pi Fleet Control & HDMI-CEC TV Power Scheduling (Night Off / Auto Wake)
+6. Local HDMI-CEC TV Power Scheduling (Night Off / Auto Wake)
 """
 
 import argparse
@@ -34,7 +34,6 @@ from modules.config_manager import (
     to_notion_embed_url,
 )
 from modules.notion_sync import sync_tasks_from_notion
-from modules.pi_fleet import fetch_fleet_status
 from modules.tv_power import NightPowerScheduler, apply_schedule_update, execute_tv_power
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -56,7 +55,7 @@ def serialize_config_writes(method: Any) -> Any:
 
 
 def valid_web_url(value: Any, *, canva_only: bool = False) -> str | None:
-    """Accept only plain HTTP(S) URLs; fleet hosts must never contain credentials."""
+    """Accept only plain HTTP(S) URLs without embedded credentials."""
     raw = str(value or "").strip()
     try:
         parsed = urlparse(raw)
@@ -270,10 +269,10 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
             )
             return
 
-        if path == "/api/fleet/status":
+        if path == "/api/admin/verify":
             if not self._require_admin():
                 return
-            self._send_json({"ok": True, "nodes": fetch_fleet_status()})
+            self._send_json({"ok": True})
             return
 
         self.send_error(404, "Endpoint not found")
@@ -463,95 +462,6 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
                 return
             save_config(cfg)
             self._send_json({"ok": True, "tv_power": tv_cfg})
-            return
-
-        # 11. Multi-Pi Fleet Node Registry
-        if path == "/api/fleet/nodes":
-            action = body.get("action", "add")
-            fleet = cfg.setdefault("pi_fleet", [])
-            if action == "add":
-                host = valid_web_url(body.get("host"))
-                if not host:
-                    self._send_json({"ok": False, "error": "Bitte eine gültige Pi-URL ohne Zugangsdaten angeben."}, status=400)
-                    return
-                fleet.append(
-                    {
-                        "id": f"pi-{uuid.uuid4().hex[:6]}",
-                        "name": (body.get("name") or "Neuer Raspberry Pi").strip(),
-                        "location": (body.get("location") or "Church Space").strip(),
-                        "host": host.rstrip("/"),
-                        "is_local": False,
-                    }
-                )
-            elif action == "delete":
-                nid = body.get("id")
-                cfg["pi_fleet"] = [n for n in fleet if n.get("id") != nid or n.get("is_local")]
-            save_config(cfg)
-            self._send_json({"ok": True, "pi_fleet": cfg["pi_fleet"]})
-            return
-
-        # 12. Multi-Pi Fleet Command Dispatch (Single Pi or Broadcast to ALL Pis)
-        if path == "/api/fleet/command":
-            target = body.get("target", "pi-local")  # 'all' or specific node id
-            cmd_type = body.get("command")  # 'mode' | 'tv_power' | 'reload' | 'notion_view'
-            payload = body.get("payload", {})
-
-            endpoint_map = {
-                "mode": "/api/display/mode",
-                "tv_power": "/api/tv/power",
-                "reload": "/api/display/reload",
-                "notion_view": "/api/notion/view",
-                "schedule": "/api/tv/schedule",
-            }
-            endpoint = endpoint_map.get(cmd_type)
-            if not endpoint:
-                self._send_json({"ok": False, "error": f"Unbekannter Fleet-Befehl: {cmd_type}"}, status=400)
-                return
-
-            fleet = cfg.get("pi_fleet", [])
-            results = []
-            for node in fleet:
-                if target not in ("all", node.get("id")):
-                    continue
-                if node.get("is_local"):
-                    # Execute directly on this local instance
-                    if cmd_type == "mode":
-                        mode = payload.get("mode", "dashboard")
-                        if mode in VALID_MODES:
-                            cfg.setdefault("display", {})["mode"] = mode
-                        save_config(cfg)
-                        results.append({"node_id": node["id"], "name": node["name"], "ok": True, "mode": mode})
-                    elif cmd_type == "tv_power":
-                        res = execute_tv_power(payload.get("action", "on"))
-                        results.append({"node_id": node["id"], "name": node["name"], "ok": True, "response": res})
-                    elif cmd_type == "reload":
-                        disp = cfg.setdefault("display", {})
-                        disp["reload_token"] = int(disp.get("reload_token", 1)) + 1
-                        save_config(cfg)
-                        results.append({"node_id": node["id"], "name": node["name"], "ok": True})
-                    elif cmd_type == "notion_view":
-                        nv = apply_notion_view_update(cfg, payload)
-                        save_config(cfg)
-                        results.append({"node_id": node["id"], "name": node["name"], "ok": True, "notion_view": nv})
-                    elif cmd_type == "schedule":
-                        try:
-                            apply_schedule_update(cfg.setdefault("tv_power", {}), payload)
-                        except ValueError as exc:
-                            results.append({"node_id": node["id"], "name": node["name"], "ok": False, "error": str(exc)})
-                        else:
-                            save_config(cfg)
-                            results.append({"node_id": node["id"], "name": node["name"], "ok": True})
-                else:
-                    results.append(
-                        {
-                            "node_id": node.get("id"),
-                            "name": node.get("name"),
-                            "ok": False,
-                            "error": "Sichere Fernsteuerung ist noch nicht konfiguriert.",
-                        }
-                    )
-
-            self._send_json({"ok": True, "target": target, "results": results})
             return
 
         self.send_error(404, "API endpoint not found")

@@ -128,6 +128,9 @@ def config_write_lock() -> Iterator[None]:
 
 def save_config(data: Dict[str, Any]) -> Dict[str, Any]:
     with _LOCK:
+        # Each Pi is intentionally standalone. Drop remnants from pre-standalone
+        # installations when this configuration is next saved.
+        data.pop("pi_fleet", None)
         canva_cfg = data.get("canva", {})
         raw_url = (canva_cfg.get("url") or "").strip()
         if raw_url:
@@ -158,10 +161,8 @@ def save_config(data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def public_config(data: Dict[str, Any]) -> Dict[str, Any]:
-    """Return display-safe state without credentials or fleet control secrets."""
+    """Return display-safe state without credentials or legacy fleet data."""
     safe = deepcopy(data)
     safe.get("notion", {}).pop("api_token", None)
-    for node in safe.get("pi_fleet", []):
-        if isinstance(node, dict):
-            node.pop("api_token", None)
+    safe.pop("pi_fleet", None)
     return safe

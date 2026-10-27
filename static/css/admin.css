@@ -331,7 +331,7 @@ textarea {
   border: 1px solid rgba(244, 63, 94, 0.4);
 }
 
-/* Fleet List */
+/* Reusable action rows */
 .fleet-list {
   display: flex;
   flex-direction: column;
@@ -380,7 +380,7 @@ textarea {
   margin-top: 2px;
 }
 
-.fleet-node-actions {
+.item-actions {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;

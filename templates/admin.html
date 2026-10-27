@@ -34,14 +34,7 @@
       <div class="card-header">
         <div>
           <span class="badge-tag">LIVE AUF DEM SCREEN</span>
-          <h2>🎛️ Anzeige-Modus wählen (Dieser Pi &amp; Space)</h2>
-        </div>
-        <div class="target-selector">
-          <label for="command-target">Ziel-Gerät:</label>
-          <select id="command-target">
-            <option value="pi-local">Dieser Pi (Lokal)</option>
-            <option value="all">🌐 Alle Pis im Space (Broadcast)</option>
-          </select>
+          <h2>🎛️ Anzeige-Modus dieses Raspberry Pi</h2>
         </div>
       </div>
 
@@ -167,35 +160,10 @@
       </div>
     </section>
 
-    <!-- 3. MULTI-PI FLEET MANAGEMENT & HDMI-CEC TV POWER -->
+    <!-- 3. LOCAL HDMI-CEC TV POWER -->
     <div class="two-col-grid">
-      <!-- Multi-Pi Fleet -->
-      <section class="card">
-        <div class="card-header">
-          <div>
-            <span class="badge-tag">MULTI-PI MANAGEMENT</span>
-            <h2>📡 Raspberry Pis im Space</h2>
-          </div>
-          <button id="btn-refresh-fleet" class="btn btn-sm">🔄 Status prüfen</button>
-        </div>
-
-        <div id="fleet-list" class="fleet-list">
-          <!-- Populated dynamically -->
-        </div>
-
-        <details class="add-node-details">
-          <summary>➕ Weiteren Raspberry Pi hinzufügen</summary>
-          <div class="form-grid compact-top">
-            <input type="text" id="new-pi-name" placeholder="Name (z.B. Youth Corner)" />
-            <input type="text" id="new-pi-loc" placeholder="Standort (z.B. 55 Zoll TV)" />
-            <input type="text" id="new-pi-host" placeholder="URL (z.B. http://192.168.178.52:8080)" />
-            <button id="btn-add-pi" class="btn btn-primary">Pi registrieren</button>
-          </div>
-        </details>
-      </section>
-
       <!-- TV Power & HDMI-CEC Night Schedule -->
-      <section class="card">
+      <section class="card full-width">
         <div class="card-header">
           <div>
             <span class="badge-tag gold">HDMI-CEC &amp; POWER</span>

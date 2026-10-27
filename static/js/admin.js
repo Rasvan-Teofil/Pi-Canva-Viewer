@@ -90,12 +90,6 @@
     }
   }
 
-  function commandError(result) {
-    if (!result || !result.ok) return result && result.error ? result.error : "Befehl fehlgeschlagen.";
-    const failed = Array.isArray(result.results) && result.results.find((entry) => !entry.ok);
-    return failed ? (failed.error || `Befehl an ${failed.name || "Pi"} fehlgeschlagen.`) : "";
-  }
-
   function populateUI(state) {
     currentState = state;
     const mode = (state.display && state.display.mode) || "dashboard";
@@ -111,19 +105,6 @@
     const rotNotionEl = document.getElementById("rot-notion");
     if (rotNotionEl) rotNotionEl.value = durs.notion || 90;
     document.getElementById("rot-verse").value = durs.verse || 45;
-
-    // Target selector options
-    const targetSel = document.getElementById("command-target");
-    const currentTarget = targetSel.value || "pi-local";
-    const fleet = state.pi_fleet || [];
-    targetSel.innerHTML =
-      `<option value="pi-local">Dieser Pi (Lokal)</option>` +
-      `<option value="all">🌐 Alle Pis im Space (Broadcast)</option>` +
-      fleet
-        .filter((n) => !n.is_local)
-        .map((n) => `<option value="${escapeHtml(n.id)}">📡 ${escapeHtml(n.name)}</option>`)
-        .join("");
-    targetSel.value = currentTarget;
 
     // Notion Database / Embed View Config
     const nv = state.notion_view || {};
@@ -190,7 +171,7 @@
             <code>${escapeHtml(p.embed_url || p.url)}</code>
           </div>
         </div>
-        <div class="fleet-node-actions">
+        <div class="item-actions">
           <button class="btn btn-sm btn-secondary" data-preset-activate="${escapeHtml(p.id)}">
             Aktivieren
           </button>
@@ -227,7 +208,6 @@
         if (res.ok) {
           showToast("Notion-Vorlage aktiviert & auf TV geschaltet!");
           loadInitialState();
-          refreshFleetStatus();
         }
       });
     });
@@ -258,7 +238,7 @@
             ${escapeHtml(t.category || "Allgemein")} · 👤 ${escapeHtml(t.assignee || "Team")} · ⏱️ ${escapeHtml(t.due || "")}
           </div>
         </div>
-        <div class="fleet-node-actions">
+        <div class="item-actions">
           <button class="btn btn-sm btn-secondary" data-task-toggle="${escapeHtml(t.id)}">
             ${escapeHtml(STATUS_LABELS[t.status] || t.status)}
           </button>
@@ -290,81 +270,6 @@
     });
   }
 
-  async function refreshFleetStatus() {
-    try {
-      const data = await apiGet("/api/fleet/status");
-      if (!data.ok) {
-        if (data.error === "Nicht autorisiert.") showToast("Bitte zuerst den Admin-Schlüssel eingeben.");
-        return;
-      }
-      const list = document.getElementById("fleet-list");
-      list.innerHTML = (data.nodes || [])
-        .map(
-          (n) => `
-        <div class="fleet-node">
-          <div>
-            <div class="fleet-node-title">
-              <span class="dot ${n.online ? "online" : "offline"}"></span>
-              <span>${escapeHtml(n.name)}</span>
-            </div>
-            <div class="fleet-node-meta">
-              ${escapeHtml(n.location)} · <code>${escapeHtml(n.host)}</code> ·
-              Modus: <strong>${escapeHtml((n.mode || "–").toUpperCase())}</strong> ·
-              TV: <strong>${escapeHtml((n.tv_power || "–").toUpperCase())}</strong>
-            </div>
-          </div>
-          <div class="fleet-node-actions">
-            <button class="btn btn-sm btn-secondary" data-node="${escapeHtml(n.id)}" data-node-mode="canva">Canva</button>
-            <button class="btn btn-sm btn-secondary" data-node="${escapeHtml(n.id)}" data-node-mode="dashboard">Dashboard</button>
-            <button class="btn btn-sm btn-secondary" data-node="${escapeHtml(n.id)}" data-node-mode="notion">Notion</button>
-            <button class="btn btn-sm btn-secondary" data-node="${escapeHtml(n.id)}" data-node-mode="verse">Vers</button>
-            <button class="btn btn-sm btn-secondary" data-node="${escapeHtml(n.id)}" data-node-mode="rotation">Loop</button>
-            <button class="btn btn-sm btn-success" data-node="${escapeHtml(n.id)}" data-node-pwr="on">TV Ein</button>
-            <button class="btn btn-sm btn-danger" data-node="${escapeHtml(n.id)}" data-node-pwr="standby">TV Aus</button>
-            ${!n.is_local ? `<button class="btn btn-sm btn-danger" data-node-del="${escapeHtml(n.id)}">✖</button>` : ""}
-          </div>
-        </div>
-      `
-        )
-        .join("");
-
-      list.querySelectorAll("[data-node-mode]").forEach((btn) => {
-        btn.addEventListener("click", async () => {
-          const result = await apiPost("/api/fleet/command", {
-            target: btn.dataset.node,
-            command: "mode",
-            payload: { mode: btn.dataset.nodeMode },
-          });
-          showToast(commandError(result) || `Modus "${btn.dataset.nodeMode}" an Pi gesendet!`);
-          loadInitialState();
-          refreshFleetStatus();
-        });
-      });
-
-      list.querySelectorAll("[data-node-pwr]").forEach((btn) => {
-        btn.addEventListener("click", async () => {
-          const result = await apiPost("/api/fleet/command", {
-            target: btn.dataset.node,
-            command: "tv_power",
-            payload: { action: btn.dataset.nodePwr },
-          });
-          showToast(commandError(result) || `HDMI-CEC Power "${btn.dataset.nodePwr}" gesendet!`);
-          loadInitialState();
-          refreshFleetStatus();
-        });
-      });
-
-      list.querySelectorAll("[data-node-del]").forEach((btn) => {
-        btn.addEventListener("click", async () => {
-          await apiPost("/api/fleet/nodes", { action: "delete", id: btn.dataset.nodeDel });
-          showToast("Pi aus Liste entfernt.");
-          loadInitialState();
-          refreshFleetStatus();
-        });
-      });
-    } catch (e) {}
-  }
-
   async function loadInitialState() {
     const resp = await fetch("/api/state");
     const data = await resp.json();
@@ -374,17 +279,10 @@
   // Event Listeners
   document.querySelectorAll(".mode-card").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      const target = document.getElementById("command-target").value;
       const mode = btn.dataset.mode;
-      let result;
-      if (target === "pi-local") {
-        result = await apiPost("/api/display/mode", { mode });
-      } else {
-        result = await apiPost("/api/fleet/command", { target, command: "mode", payload: { mode } });
-      }
-      showToast(commandError(result) || `Anzeige-Modus auf "${mode.toUpperCase()}" umgeschaltet!`);
+      const result = await apiPost("/api/display/mode", { mode });
+      showToast(result.ok ? `Anzeige-Modus auf "${mode.toUpperCase()}" umgeschaltet!` : (result.error || "Modus konnte nicht geändert werden."));
       loadInitialState();
-      refreshFleetStatus();
     });
   });
 
@@ -428,13 +326,8 @@
       showToast("Bitte eine veröffentlichte Notion-URL oder einen Embed-Link eingeben.");
       return;
     }
-    const target = document.getElementById("command-target").value;
-    if (target === "pi-local") {
-      await apiPost("/api/notion/view", payload);
-    } else {
-      await apiPost("/api/fleet/command", { target, command: "notion_view", payload });
-    }
-    showToast("Notion-Ansicht gespeichert!");
+    const res = await apiPost("/api/notion/view", payload);
+    showToast(res.ok ? "Notion-Ansicht gespeichert!" : (res.error || "Notion-Ansicht konnte nicht gespeichert werden."));
     loadInitialState();
   });
 
@@ -444,15 +337,9 @@
       showToast("Bitte eine veröffentlichte Notion-URL oder einen Embed-Link eingeben.");
       return;
     }
-    const target = document.getElementById("command-target").value;
-    if (target === "pi-local") {
-      await apiPost("/api/notion/view", payload);
-    } else {
-      await apiPost("/api/fleet/command", { target, command: "notion_view", payload });
-    }
-    showToast("Notion-Ansicht gespeichert & direkt auf dem TV aktiviert!");
+    const res = await apiPost("/api/notion/view", payload);
+    showToast(res.ok ? "Notion-Ansicht gespeichert & direkt auf dem TV aktiviert!" : (res.error || "Notion-Ansicht konnte nicht gespeichert werden."));
     loadInitialState();
-    refreshFleetStatus();
   });
 
   document.getElementById("btn-save-notion-preset").addEventListener("click", async () => {
@@ -467,24 +354,16 @@
   });
 
   document.getElementById("btn-reload-display").addEventListener("click", async () => {
-    const target = document.getElementById("command-target").value;
-    const result = await apiPost("/api/fleet/command", { target, command: "reload", payload: {} });
-    showToast(commandError(result) || "Reload-Signal an TV-Display gesendet!");
+    const result = await apiPost("/api/display/reload", {});
+    showToast(result.ok ? "Reload-Signal an TV-Display gesendet!" : (result.error || "Display konnte nicht neu geladen werden."));
   });
 
   document.querySelectorAll("[data-power]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      const target = document.getElementById("command-target").value;
       const action = btn.dataset.power;
-      let result;
-      if (target === "pi-local") {
-        result = await apiPost("/api/tv/power", { action });
-      } else {
-        result = await apiPost("/api/fleet/command", { target, command: "tv_power", payload: { action } });
-      }
-      showToast(commandError(result) || `HDMI-CEC Befehl "${action}" ausgeführt!`);
+      const result = await apiPost("/api/tv/power", { action });
+      showToast(result.ok ? `HDMI-CEC Befehl "${action}" ausgeführt!` : (result.error || "HDMI-CEC Befehl fehlgeschlagen."));
       loadInitialState();
-      refreshFleetStatus();
     });
   });
 
@@ -508,36 +387,13 @@
       return;
     }
     sessionStorage.setItem(ADMIN_TOKEN_KEY, token);
-    const result = await apiGet("/api/fleet/status");
+    const result = await apiGet("/api/admin/verify");
     if (result.ok) {
       showToast("Admin-Schlüssel akzeptiert.");
-      refreshFleetStatus();
     } else {
       sessionStorage.removeItem(ADMIN_TOKEN_KEY);
       showToast(result.error || "Admin-Schlüssel wurde nicht akzeptiert.");
     }
-  });
-
-  document.getElementById("btn-add-pi").addEventListener("click", async () => {
-    const name = document.getElementById("new-pi-name").value.trim();
-    const location = document.getElementById("new-pi-loc").value.trim();
-    const host = document.getElementById("new-pi-host").value.trim();
-    if (!name || !host) {
-      showToast("Bitte Name und URL des Raspberry Pi angeben.");
-      return;
-    }
-    await apiPost("/api/fleet/nodes", { action: "add", name, location, host });
-    document.getElementById("new-pi-name").value = "";
-    document.getElementById("new-pi-loc").value = "";
-    document.getElementById("new-pi-host").value = "";
-    showToast(`Raspberry Pi "${name}" registriert!`);
-    loadInitialState();
-    refreshFleetStatus();
-  });
-
-  document.getElementById("btn-refresh-fleet").addEventListener("click", () => {
-    refreshFleetStatus();
-    showToast("Pi-Fleet Status aktualisiert.");
   });
 
   document.getElementById("btn-add-task").addEventListener("click", async () => {
@@ -600,5 +456,4 @@
 
   document.getElementById("admin-token").value = getAdminToken();
   loadInitialState();
-  refreshFleetStatus();
 })();

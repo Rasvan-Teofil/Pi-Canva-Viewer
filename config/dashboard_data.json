@@ -168,8 +168,8 @@
         6
       ]
     },
-    "last_action": "HDMI-CEC Initialized (Auto-Schedule 22:30 -> 08:00)",
-    "last_action_time": "2026-10-26 15:11:15",
+    "last_action": "on fehlgeschlagen",
+    "last_action_time": "2026-10-27 17:16:36",
     "simulated_state": "on",
     "last_power_state": "on"
   },
@@ -177,28 +177,5 @@
     "enabled": false,
     "database_id": "c19003181cd6401c976e2d94a68a0561",
     "last_sync": null
-  },
-  "pi_fleet": [
-    {
-      "id": "pi-local",
-      "name": "Celebration Space – Links (Dieser Pi)",
-      "location": "Bühne Links · 65\" Samsung TV",
-      "host": "http://127.0.0.1:8080",
-      "is_local": true
-    },
-    {
-      "id": "pi-celebration-right",
-      "name": "Celebration Space – Rechts",
-      "location": "Bühne Rechts · 65\" Samsung TV",
-      "host": "http://raspberrypi-right.local:8080",
-      "is_local": false
-    },
-    {
-      "id": "pi-welcome",
-      "name": "Welcome Area & Café",
-      "location": "Foyer / Check-In · 55\" TV",
-      "host": "http://raspberrypi-welcome.local:8080",
-      "is_local": false
-    }
-  ]
+  }
 }

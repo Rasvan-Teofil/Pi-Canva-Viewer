@@ -1,6 +1,6 @@
 # Raspberry Pi Canva Kiosk & ICF Church Screen Manager
 
-Dieses Projekt automatisiert die Anzeige von **Canva-Präsentationen (Keynotes)**, einem **Church- & Volunteer-Aufgaben-Dashboard** sowie dem **Vers der Woche** im Vollbild-Kioskmodus auf einem oder mehreren Raspberry Pis – inklusive **zentraler Web-Steuerung (Multi-Pi Control Center)** und **automatischer TV-Power-Steuerung (Nachtabschaltung & Auto-Wakeup) über HDMI-CEC**.
+Dieses Projekt automatisiert die Anzeige von **Canva-Präsentationen (Keynotes)**, einer veröffentlichten **Notion-Seite** sowie optionalen Dashboard-Inhalten im Vollbild-Kioskmodus. Jede Raspberry-Pi-Installation ist dabei vollständig **eigenständig**: Sie hat ihre eigene Admin-Seite, ihren eigenen Canva-Link, ihre eigene Notion-Ansicht und ihren eigenen HDMI-CEC-Zeitplan.
 
 ## Schnellstart: Ubuntu auf dem Raspberry Pi
 
@@ -23,14 +23,14 @@ sudo bash ./install.sh --install-desktop
 Nach der Installation einmal neu starten. Danach erscheint die Anzeige selbstständig am HDMI-Bildschirm. Die Ausgabe des Installers enthält den einmalig erzeugten Admin-Schlüssel.
 
 - TV-Ansicht auf dem Pi: `http://127.0.0.1:8080/display`
-- Administration im lokalen Netz: `http://<PI-IP>:8080/admin`
+- Administration im lokalen Netz: `http://<PI-IP>:8080/admin` – hier werden Canva-Link, Notion-Ansicht, Anzeige-Modus und TV-Zeitplan dieses Pi gesetzt.
 - Admin-Schlüssel: in der Kopfzeile der Administration einfügen; er wird nur für die laufende Browser-Sitzung gespeichert.
 
 Der Schlüssel liegt auf dem Pi mit restriktiven Rechten in `/etc/pi-screen/runtime.env`. Bei einer Aktualisierung des ausgecheckten Branches genügt danach erneut `sudo bash ./install.sh`; der Schlüssel bleibt erhalten und der Dienst wird neu gestartet.
 
 ### Sicherheit und CEC-Hinweis
 
-Alle schreibenden Steuerbefehle (Modus, Canva-Link, Zeitplan, TV-Power usw.) verlangen den Admin-Schlüssel. Der reine TV-Display-Endpunkt darf ohne Schlüssel gelesen werden, enthält aber keine Notion- oder Fleet-Zugangsdaten. CORS für fremde Webseiten ist deaktiviert.
+Alle schreibenden Steuerbefehle (Modus, Canva-Link, Zeitplan, TV-Power usw.) verlangen den Admin-Schlüssel. Der reine TV-Display-Endpunkt darf ohne Schlüssel gelesen werden, enthält aber keine Notion-Zugangsdaten. CORS für fremde Webseiten ist deaktiviert.
 
 HDMI-CEC kann einen kompatiblen Fernseher in den Standby schicken und wieder wecken. Es schaltet **nicht garantiert die Netzspannung** ab. CEC muss am Fernseher aktiviert sein (bei Samsung: Anynet+); der mitgelieferte Status meldet einen Fehler, statt wie der alte Prototyp einen simulierten Erfolg anzuzeigen. Für professionelle Displays ohne verlässliches CEC wäre später RS-232, IP-Control oder ein geprüfter Stromschalter nötig.
 
@@ -42,7 +42,7 @@ Sobald im Admin-Bereich je ein Canva-Design-Link und eine veröffentlichte Notio
 
 ### Mehrere Pis
 
-Die lokale Kiosk-Installation ist produktionsbereit vorbereitet. Die bisherige Mehr-Pi-Oberfläche bleibt als Übersicht enthalten. Bevor aktive Befehle sicher zwischen Pis weitergereicht werden, braucht jeder Ziel-Pi eine eindeutig hinterlegte Vertrauensbeziehung bzw. einen Schlüssel. Das wird bewusst nicht über ungeschützte Netzwerkaufrufe gelöst.
+Installiere das Repository auf jedem Pi separat und öffne jeweils dessen eigene Admin-Seite: `http://<IP-DIESES-PI>:8080/admin`. Konfigurationen werden ausschließlich lokal in dessen `config/dashboard_data.json` gespeichert; kein Pi verwaltet oder steuert andere Pis. Damit kann jeder Bildschirm unabhängig eine andere Canva-Präsentation, Notion-Seite und Ein-/Ausschaltzeit erhalten.
 
 ---
 
@@ -55,10 +55,9 @@ Die lokale Kiosk-Installation ist produktionsbereit vorbereitet. Die bisherige M
    - 📖 **Vers der Woche (Fullscreen Slide):** Ruhige, großformatige Vollbild-Ansicht mit Bibelvers, Bibelstelle und kurzem Wochen-Impuls.
    - 🔄 **Auto-Rotation (Playlist / Mix):** Wechselt automatisch in einstellbaren Zeitintervallen zwischen Canva-Keynote, Church-Dashboard und Vers der Woche (inkl. Fortschrittsbalken).
 
-2. **Web-Control-Panel & Multi-Pi Management (`/admin`):**
-   - Übersicht und Steuerung **einzelner Raspberry Pis** (z. B. *Celebration Space Links*, *Celebration Space Rechts*, *Welcome Area*) oder **aller Pis gleichzeitig (Broadcast)**.
-   - Live-Umschalten des Anzeige-Modus vom Smartphone oder Laptop im Netzwerk.
-   - Direktes Bearbeiten von Canva-URL (synchronisiert automatisch mit `canva_url.txt`), Vers der Woche und Volunteer-Aufgaben im Browser.
+2. **Lokales Web-Control-Panel (`/admin`):**
+   - Live-Umschalten des Anzeige-Modus ausschließlich auf dem jeweils geöffneten Pi – vom Smartphone oder Laptop im Netzwerk.
+   - Direktes Bearbeiten von Canva-URL (synchronisiert automatisch mit `canva_url.txt`), veröffentlichter Notion-Ansicht, Vers der Woche und lokalen Dashboard-Inhalten im Browser.
    - **Zero-Dependency Python 3 Server:** Läuft direkt mit der Python-Standardbibliothek (`python3 app.py`) ohne `pip`- oder `venv`-Zwang (kompatibel mit Raspberry Pi OS Bookworm/Trixie PEP 668).
 
 3. **TV-Powerhandling über HDMI-CEC (`cec-client` / `cec-ctl`):**
@@ -73,15 +72,14 @@ Die lokale Kiosk-Installation ist produktionsbereit vorbereitet. Die bisherige M
 .
 ├── app.py                        # Python 3 HTTP/REST Kiosk- & Management-Server (Port 8080)
 ├── config/
-│   └── dashboard_data.json       # Konfiguration: Modus, Aufgaben, Vers der Woche, TV-Zeitplan, Pi-Fleet
+│   └── dashboard_data.json       # Lokale Konfiguration dieses Pi: Modus, Links, Aufgaben, Vers, TV-Zeitplan
 ├── modules/
 │   ├── config_manager.py         # Lädt/speichert JSON-Config & hält canva_url.txt synchron
 │   ├── tv_power.py               # HDMI-CEC Steuerung (cec-client/cec-ctl/vcgencmd) & NightPowerScheduler
-│   ├── notion_sync.py            # Optionaler Live-Sync mit Notion-Datenbank [🧩 Volunteer Aufgaben]
-│   └── pi_fleet.py               # Multi-Pi Statusabfrage & Remote-Befehlsverteilung
+│   └── notion_sync.py            # Optionaler Live-Sync mit Notion-Datenbank [🧩 Volunteer Aufgaben]
 ├── templates/
 │   ├── display.html              # Vollbild-TV-Ansicht (/display) für 65"-Screens
-│   └── admin.html                # Web-Control-Panel (/admin) zur Steuerung aller Pis & Inhalte
+│   └── admin.html                # Lokales Web-Control-Panel (/admin) für diesen Pi & Inhalte
 ├── static/
 │   ├── css/                      # Dark-Mode Stylesheets für TV-Display & Admin-Panel
 │   └── js/                       # Live-Polling, Rotations-Timer & Admin-Steuerungslogik
@@ -116,7 +114,7 @@ python3 app.py --port 8080
 
 Anschließend im Browser erreichbar:
 - **TV Fullscreen-Ansicht (Kiosk):** `http://<pi-ip>:8080/display` (oder mit Modus-Parameter `?mode=dashboard`, `?mode=notion`, `?mode=verse`, `?mode=canva`, `?mode=rotation`)
-- **Admin & Multi-Pi Control Center:** `http://<pi-ip>:8080/admin`
+- **Lokale Administration dieses Pi:** `http://<pi-ip>:8080/admin`
 
 ---
 
@@ -179,7 +177,7 @@ Damit ein Samsung Smart-TV (z. B. 65" im Celebration Space) beim Einschalten **g
 
 | Methode | Pfad | Beschreibung |
 | :--- | :--- | :--- |
-| `GET` | `/api/state` | Liefert kompletten aktuellen Zustand (Modus, Aufgaben, Vers, Events, TV-Power, Fleet) |
+| `GET` | `/api/state` | Liefert den lokalen Zustand dieses Pi (Modus, Canva, Notion, Aufgaben, Vers, Events, TV-Power) |
 | `POST` | `/api/display/mode` | Setzt den Modus (`canva`, `dashboard`, `notion`, `verse`, `rotation`) & Rotationsintervalle |
 | `POST` | `/api/display/reload` | Löst einen sofortigen Reload auf dem TV-Screen aus |
 | `POST` | `/api/canva` | Aktualisiert die Canva-URL (und schreibt sie in `canva_url.txt`) |
@@ -189,8 +187,6 @@ Damit ein Samsung Smart-TV (z. B. 65" im Celebration Space) beim Einschalten **g
 | `POST` | `/api/notion/sync` | Synchronisiert Aufgaben live aus Notion (`NOTION_TOKEN` + `database_id`) |
 | `POST` | `/api/tv/power` | Führt HDMI-CEC Befehl aus (`action`: `on`, `standby`, `active-source`, `status`) |
 | `POST` | `/api/tv/schedule` | Speichert den Zeitplan für die automatische Nachtabschaltung (`off_time`, `on_time`) |
-| `GET` | `/api/fleet/status` | Prüft den Live-Status aller registrierten Raspberry Pis im Space |
-| `POST` | `/api/fleet/command` | Sendet Befehle gezielt an einen Pi oder per Broadcast (`target: "all"`) an alle Pis |
 
 ---
 
