@@ -6,9 +6,10 @@ Dieses Projekt automatisiert die Anzeige von **Canva-Präsentationen (Keynotes)*
 
 ## ✨ Features im Überblick
 
-1. **4 Live-Anzeige-Modi (ohne Neustart umschaltbar):**
+1. **5 Live-Anzeige-Modi (ohne Neustart umschaltbar):**
    - 🎞️ **Canva Keynote:** Zeigt eine konfigurierbare Canva-Präsentation im Vollbild (per Embed-View oder klassisch mit `xdotool` Autoplay-Steuerung).
    - 🧩 **Church Dashboard (ICF Heilbronn):** Kontrastreiches Dark-Mode-Dashboard für 65"-TVs im Space mit offenen **Church- & Volunteer-Aufgaben** (lokal pflegbar oder per **Notion-API Sync** aus `[🧩 Volunteer Aufgaben]`), **Vers der Woche Widget**, **Kommenden Events** (*Sunday Night*, *Youth Friendsgiving*, *Celebration*) und Live-Uhrzeit.
+   - 🗂️ **Beliebige Notion-Datenbank / Ansicht (`notion`):** Zeigt jede im Web veröffentlichte Notion-Datenbank oder Notion-Seite direkt live auf dem Screen an (Board, Tabelle, Kalender, Timeline). Normale `notion.site`-, `notion.so/...?v=...`-Links oder `<iframe>`-Snippets werden automatisch in iframe-kompatible `.notion.site/ebd/...`-Embed-URLs umgewandelt; mehrere Ansichten können als **1-Klick-Vorlagen (Presets)** gespeichert oder alternativ direkt links im Church-Dashboard eingebettet werden.
    - 📖 **Vers der Woche (Fullscreen Slide):** Ruhige, großformatige Vollbild-Ansicht mit Bibelvers, Bibelstelle und kurzem Wochen-Impuls.
    - 🔄 **Auto-Rotation (Playlist / Mix):** Wechselt automatisch in einstellbaren Zeitintervallen zwischen Canva-Keynote, Church-Dashboard und Vers der Woche (inkl. Fortschrittsbalken).
 
@@ -72,7 +73,7 @@ python3 app.py --port 8080
 ```
 
 Anschließend im Browser erreichbar:
-- **TV Fullscreen-Ansicht (Kiosk):** `http://<pi-ip>:8080/display` (oder mit Modus-Parameter `?mode=dashboard`, `?mode=verse`, `?mode=canva`, `?mode=rotation`)
+- **TV Fullscreen-Ansicht (Kiosk):** `http://<pi-ip>:8080/display` (oder mit Modus-Parameter `?mode=dashboard`, `?mode=notion`, `?mode=verse`, `?mode=canva`, `?mode=rotation`)
 - **Admin & Multi-Pi Control Center:** `http://<pi-ip>:8080/admin`
 
 ---
@@ -137,11 +138,12 @@ Damit ein Samsung Smart-TV (z. B. 65" im Celebration Space) beim Einschalten **g
 | Methode | Pfad | Beschreibung |
 | :--- | :--- | :--- |
 | `GET` | `/api/state` | Liefert kompletten aktuellen Zustand (Modus, Aufgaben, Vers, Events, TV-Power, Fleet) |
-| `POST` | `/api/display/mode` | Setzt den Modus (`canva`, `dashboard`, `verse`, `rotation`) & Rotationsintervalle |
+| `POST` | `/api/display/mode` | Setzt den Modus (`canva`, `dashboard`, `notion`, `verse`, `rotation`) & Rotationsintervalle |
 | `POST` | `/api/display/reload` | Löst einen sofortigen Reload auf dem TV-Screen aus |
 | `POST` | `/api/canva` | Aktualisiert die Canva-URL (und schreibt sie in `canva_url.txt`) |
 | `POST` | `/api/verse` | Aktualisiert den Vers der Woche (`text`, `reference`, `impulse`, `week_label`) |
 | `POST` | `/api/tasks` | Aufgaben verwalten (`action`: `add`, `toggle`, `update`, `delete`) |
+| `POST` | `/api/notion/view` | Speichert/aktiviert eine veröffentlichte Notion-Datenbank-Ansicht (`url` → `/ebd/`, `presets`, `show_in_dashboard`) |
 | `POST` | `/api/notion/sync` | Synchronisiert Aufgaben live aus Notion (`NOTION_TOKEN` + `database_id`) |
 | `POST` | `/api/tv/power` | Führt HDMI-CEC Befehl aus (`action`: `on`, `standby`, `active-source`, `status`) |
 | `POST` | `/api/tv/schedule` | Speichert den Zeitplan für die automatische Nachtabschaltung (`off_time`, `on_time`) |

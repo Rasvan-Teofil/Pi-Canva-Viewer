@@ -23,6 +23,39 @@
       .replace(/"/g, "&quot;");
   }
 
+  function computeClientNotionEmbedPreview(rawInput, defaultSubdomain) {
+    let text = String(rawInput || "").trim();
+    if (!text) return "–";
+    if (text.toLowerCase().includes("<iframe")) {
+      const m = text.match(/src=["']([^"']+)["']/i);
+      if (m) text = m[1].trim();
+    }
+    try {
+      const u = new URL(text);
+      const host = u.hostname.toLowerCase();
+      const isNotion =
+        host.endsWith(".notion.site") ||
+        ["notion.site", "www.notion.so", "notion.so", "app.notion.com"].includes(host);
+      if (!isNotion) return text;
+      const sub = String(defaultSubdomain || "icfhn").trim().toLowerCase() || "icfhn";
+      const segs = u.pathname.split("/").filter(Boolean);
+      const hexRe = /([0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/;
+      let targetHost = host;
+      if (!host.endsWith(".notion.site")) {
+        if (segs.length >= 2 && !["p", "ebd"].includes(segs[0].toLowerCase()) && !hexRe.test(segs[0])) {
+          targetHost = `${segs[0].toLowerCase()}.notion.site`;
+        } else {
+          targetHost = `${sub}.notion.site`;
+        }
+      }
+      const m = u.pathname.match(hexRe);
+      const targetPath = m ? `/ebd/${m[1].replace(/-/g, "").toLowerCase()}` : u.pathname;
+      return `https://${targetHost}${targetPath}${u.search || ""}`;
+    } catch (e) {
+      return text;
+    }
+  }
+
   async function apiPost(url, payload) {
     const resp = await fetch(url, {
       method: "POST",
@@ -44,6 +77,8 @@
     const durs = (state.display && state.display.rotation && state.display.rotation.durations_sec) || {};
     document.getElementById("rot-canva").value = durs.canva || 180;
     document.getElementById("rot-dashboard").value = durs.dashboard || 60;
+    const rotNotionEl = document.getElementById("rot-notion");
+    if (rotNotionEl) rotNotionEl.value = durs.notion || 90;
     document.getElementById("rot-verse").value = durs.verse || 45;
 
     // Target selector options
@@ -58,6 +93,17 @@
         .map((n) => `<option value="${escapeHtml(n.id)}">📡 ${escapeHtml(n.name)}</option>`)
         .join("");
     targetSel.value = currentTarget;
+
+    // Notion Database / Embed View Config
+    const nv = state.notion_view || {};
+    document.getElementById("notion-view-title").value = nv.title || "";
+    document.getElementById("notion-view-subdomain").value = nv.subdomain || "icfhn";
+    document.getElementById("notion-view-url").value = nv.url || "";
+    document.getElementById("notion-embed-preview").textContent =
+      nv.embed_url || computeClientNotionEmbedPreview(nv.url, nv.subdomain);
+    document.getElementById("notion-show-in-dashboard").checked = Boolean(nv.show_in_dashboard);
+    document.getElementById("notion-fullscreen-header").checked = Boolean(nv.fullscreen_without_header);
+    renderNotionPresets(nv.presets || [], nv.embed_url || "");
 
     // TV Power & Schedule
     const tv = state.tv_power || {};
@@ -87,6 +133,82 @@
 
     // Tasks list
     renderTasks(state.tasks || []);
+  }
+
+  function renderNotionPresets(presets, activeEmbedUrl) {
+    const container = document.getElementById("notion-presets-list");
+    if (!container) return;
+    if (!presets.length) {
+      container.innerHTML = `<div class="meta-note">Noch keine Vorlagen gespeichert.</div>`;
+      return;
+    }
+    container.innerHTML = presets
+      .map((p) => {
+        const isActive = p.embed_url && p.embed_url === activeEmbedUrl;
+        return `
+      <div class="admin-task-item ${isActive ? "preset-active" : ""}">
+        <div style="min-width: 0; flex: 1;">
+          <div class="admin-task-title">
+            ${isActive ? "🟢 " : "🗂️ "}${escapeHtml(p.title)}
+          </div>
+          <div class="admin-task-sub" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            <code>${escapeHtml(p.embed_url || p.url)}</code>
+          </div>
+        </div>
+        <div class="fleet-node-actions">
+          <button class="btn btn-sm btn-secondary" data-preset-activate="${escapeHtml(p.id)}">
+            Aktivieren
+          </button>
+          <button class="btn btn-sm btn-success" data-preset-tv="${escapeHtml(p.id)}">
+            🖥️ Auf TV
+          </button>
+          <button class="btn btn-sm btn-danger" data-preset-delete="${escapeHtml(p.id)}">🗑️</button>
+        </div>
+      </div>
+    `;
+      })
+      .join("");
+
+    container.querySelectorAll("[data-preset-activate]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const res = await apiPost("/api/notion/view", {
+          action: "activate_preset",
+          id: btn.dataset.presetActivate,
+        });
+        if (res.ok) {
+          showToast("Notion-Vorlage geladen!");
+          loadInitialState();
+        }
+      });
+    });
+
+    container.querySelectorAll("[data-preset-tv]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const res = await apiPost("/api/notion/view", {
+          action: "activate_preset",
+          id: btn.dataset.presetTv,
+          switch_mode: true,
+        });
+        if (res.ok) {
+          showToast("Notion-Vorlage aktiviert & auf TV geschaltet!");
+          loadInitialState();
+          refreshFleetStatus();
+        }
+      });
+    });
+
+    container.querySelectorAll("[data-preset-delete]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const res = await apiPost("/api/notion/view", {
+          action: "delete_preset",
+          id: btn.dataset.presetDelete,
+        });
+        if (res.ok) {
+          showToast("Vorlage gelöscht.");
+          loadInitialState();
+        }
+      });
+    });
   }
 
   function renderTasks(tasks) {
@@ -157,6 +279,7 @@
           <div class="fleet-node-actions">
             <button class="btn btn-sm btn-secondary" data-node="${escapeHtml(n.id)}" data-node-mode="canva">Canva</button>
             <button class="btn btn-sm btn-secondary" data-node="${escapeHtml(n.id)}" data-node-mode="dashboard">Dashboard</button>
+            <button class="btn btn-sm btn-secondary" data-node="${escapeHtml(n.id)}" data-node-mode="notion">Notion</button>
             <button class="btn btn-sm btn-secondary" data-node="${escapeHtml(n.id)}" data-node-mode="verse">Vers</button>
             <button class="btn btn-sm btn-secondary" data-node="${escapeHtml(n.id)}" data-node-mode="rotation">Loop</button>
             <button class="btn btn-sm btn-success" data-node="${escapeHtml(n.id)}" data-node-pwr="on">TV Ein</button>
@@ -232,10 +355,77 @@
       durations_sec: {
         canva: Number(document.getElementById("rot-canva").value || 180),
         dashboard: Number(document.getElementById("rot-dashboard").value || 60),
+        notion: Number(document.getElementById("rot-notion").value || 90),
         verse: Number(document.getElementById("rot-verse").value || 45),
       },
     });
     showToast("Rotations-Intervalle gespeichert!");
+  });
+
+  // Live preview of converted Notion /ebd/ URL while typing
+  const updateNotionPreview = () => {
+    const url = document.getElementById("notion-view-url").value;
+    const sub = document.getElementById("notion-view-subdomain").value;
+    document.getElementById("notion-embed-preview").textContent = computeClientNotionEmbedPreview(url, sub);
+  };
+  document.getElementById("notion-view-url").addEventListener("input", updateNotionPreview);
+  document.getElementById("notion-view-subdomain").addEventListener("input", updateNotionPreview);
+
+  function collectNotionViewPayload(extra) {
+    return Object.assign(
+      {
+        title: document.getElementById("notion-view-title").value.trim() || "Notion Datenbank",
+        subdomain: document.getElementById("notion-view-subdomain").value.trim() || "icfhn",
+        url: document.getElementById("notion-view-url").value.trim(),
+        show_in_dashboard: document.getElementById("notion-show-in-dashboard").checked,
+        fullscreen_without_header: document.getElementById("notion-fullscreen-header").checked,
+      },
+      extra || {}
+    );
+  }
+
+  document.getElementById("btn-save-notion-view").addEventListener("click", async () => {
+    const payload = collectNotionViewPayload({ action: "update" });
+    if (!payload.url) {
+      showToast("Bitte eine veröffentlichte Notion-URL oder einen Embed-Link eingeben.");
+      return;
+    }
+    const target = document.getElementById("command-target").value;
+    if (target === "pi-local") {
+      await apiPost("/api/notion/view", payload);
+    } else {
+      await apiPost("/api/fleet/command", { target, command: "notion_view", payload });
+    }
+    showToast("Notion-Ansicht gespeichert!");
+    loadInitialState();
+  });
+
+  document.getElementById("btn-show-notion-tv").addEventListener("click", async () => {
+    const payload = collectNotionViewPayload({ action: "update", switch_mode: true });
+    if (!payload.url) {
+      showToast("Bitte eine veröffentlichte Notion-URL oder einen Embed-Link eingeben.");
+      return;
+    }
+    const target = document.getElementById("command-target").value;
+    if (target === "pi-local") {
+      await apiPost("/api/notion/view", payload);
+    } else {
+      await apiPost("/api/fleet/command", { target, command: "notion_view", payload });
+    }
+    showToast("Notion-Ansicht gespeichert & direkt auf dem TV aktiviert!");
+    loadInitialState();
+    refreshFleetStatus();
+  });
+
+  document.getElementById("btn-save-notion-preset").addEventListener("click", async () => {
+    const payload = collectNotionViewPayload({ action: "save_preset" });
+    if (!payload.url) {
+      showToast("Bitte zuerst eine Notion-URL eingeben.");
+      return;
+    }
+    await apiPost("/api/notion/view", payload);
+    showToast(`Vorlage "${payload.title}" gespeichert!`);
+    loadInitialState();
   });
 
   document.getElementById("btn-reload-display").addEventListener("click", async () => {

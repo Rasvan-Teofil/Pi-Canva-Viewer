@@ -12,7 +12,7 @@
       <div class="logo-badge">ICF</div>
       <div>
         <h1>Pi Screen &amp; TV Control Center</h1>
-        <p id="header-subtitle">ICF Heilbronn · Digital Signage, Church Dashboard &amp; HDMI-CEC</p>
+        <p id="header-subtitle">ICF Heilbronn · Digital Signage, Church Dashboard, Notion Views &amp; HDMI-CEC</p>
       </div>
     </div>
     <div class="header-actions">
@@ -53,6 +53,12 @@
           <span class="mode-desc">Volunteer-Aufgaben, Vers der Woche &amp; Events</span>
         </button>
 
+        <button class="mode-card" data-mode="notion">
+          <span class="mode-icon">🗂️</span>
+          <span class="mode-title">Notion Datenbank</span>
+          <span class="mode-desc">Beliebige veröffentlichte Notion-Ansicht / Embed</span>
+        </button>
+
         <button class="mode-card" data-mode="verse">
           <span class="mode-icon">📖</span>
           <span class="mode-title">Vers der Woche</span>
@@ -62,7 +68,7 @@
         <button class="mode-card" data-mode="rotation">
           <span class="mode-icon">🔄</span>
           <span class="mode-title">Auto-Rotation (Mix)</span>
-          <span class="mode-desc">Wechselt automatisch zwischen Keynote, Dashboard &amp; Vers</span>
+          <span class="mode-desc">Wechselt automatisch zwischen Keynote, Dashboard, Notion &amp; Vers</span>
         </button>
       </div>
 
@@ -76,6 +82,10 @@
           <input type="number" id="rot-dashboard" min="5" max="3600" value="60" />
         </div>
         <div class="rot-group">
+          <label>🗂️ Notion Dauer (Sek.)</label>
+          <input type="number" id="rot-notion" min="5" max="3600" value="90" />
+        </div>
+        <div class="rot-group">
           <label>📖 Vers Dauer (Sek.)</label>
           <input type="number" id="rot-verse" min="5" max="3600" value="45" />
         </div>
@@ -83,7 +93,76 @@
       </div>
     </section>
 
-    <!-- 2. MULTI-PI FLEET MANAGEMENT & HDMI-CEC TV POWER -->
+    <!-- 2. GENERIC NOTION DATABASE / EMBED VIEW MANAGER -->
+    <section class="card full-width">
+      <div class="card-header">
+        <div>
+          <span class="badge-tag gold">NOTION LIVE EMBED</span>
+          <h2>🗂️ Beliebige Notion-Datenbank / Ansicht einbetten (Notion Site / Embed)</h2>
+        </div>
+        <a href="/display?mode=notion" target="_blank" class="btn btn-sm btn-secondary">🔍 Notion-Ansicht testen</a>
+      </div>
+
+      <p class="card-help">
+        Füge hier <strong>jede beliebige im Web veröffentlichte Notion-Datenbank oder Seite</strong> ein (egal ob normaler <code>notion.site</code>-Link, <code>notion.so/...?v=...</code> View-Link, <code>/ebd/</code>-Link oder kompletter <code>&lt;iframe&gt;</code>-Code). Der Server wandelt den Link automatisch in eine iframe-fähige <code>.notion.site/ebd/...</code>-Ansicht um.
+      </p>
+
+      <div class="two-col-grid">
+        <div class="form-stack">
+          <div class="two-inputs">
+            <div>
+              <label for="notion-view-title">Titel der Ansicht (auf dem Screen)</label>
+              <input type="text" id="notion-view-title" placeholder="z.B. 🧩 Volunteer Aufgaben – Board" />
+            </div>
+            <div>
+              <label for="notion-view-subdomain">Notion-Site Subdomain (Standard: icfhn)</label>
+              <input type="text" id="notion-view-subdomain" placeholder="icfhn" value="icfhn" />
+            </div>
+          </div>
+
+          <div>
+            <label for="notion-view-url">Veröffentlichte Notion-URL, <code>/ebd/</code>-Link oder <code>&lt;iframe&gt;</code>-Embed-Code</label>
+            <input
+              type="text"
+              id="notion-view-url"
+              placeholder="https://icfhn.notion.site/ebd/c19003181cd6401c976e2d94a68a0561?v=..."
+            />
+            <p class="meta-note">
+              Automatische Embed-URL: <code id="notion-embed-preview">–</code>
+            </p>
+          </div>
+
+          <div class="notion-toggles-box">
+            <label class="toggle-label">
+              <input type="checkbox" id="notion-show-in-dashboard" />
+              <span><strong>Im Church-Dashboard links statt der manuellen Aufgabenliste einbetten</strong></span>
+            </label>
+            <label class="toggle-label" style="margin-bottom: 0;">
+              <input type="checkbox" id="notion-fullscreen-header" />
+              <span><strong>Im Modus „Notion Datenbank“ ohne obere Statusleiste anzeigen (Vollbild)</strong></span>
+            </label>
+          </div>
+
+          <div class="btn-row" style="flex-wrap: wrap;">
+            <button id="btn-save-notion-view" class="btn btn-primary">💾 Notion-Ansicht speichern &amp; aktivieren</button>
+            <button id="btn-show-notion-tv" class="btn btn-success">🖥️ Direkt auf TV anzeigen (Modus: Notion)</button>
+            <button id="btn-save-notion-preset" class="btn btn-accent">⭐ Als Vorlage (Preset) speichern</button>
+          </div>
+        </div>
+
+        <div class="form-stack">
+          <label>⭐ Gespeicherte Notion-Datenbank-Ansichten (1-Klick Wechsel)</label>
+          <div id="notion-presets-list" class="admin-tasks-list">
+            <!-- Populated dynamically via admin.js -->
+          </div>
+          <p class="meta-note">
+            💡 <strong>So veröffentlichst du eine beliebige Notion-Datenbank:</strong> In Notion oben rechts auf <em>Teilen (Share) → Veröffentlichen (Publish)</em> klicken oder über <em>Ansichtslink kopieren / Webseite einbetten (Embed this page)</em> die URL kopieren und links einfügen.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. MULTI-PI FLEET MANAGEMENT & HDMI-CEC TV POWER -->
     <div class="two-col-grid">
       <!-- Multi-Pi Fleet -->
       <section class="card">
@@ -161,7 +240,7 @@
       </section>
     </div>
 
-    <!-- 3. CHURCH AUFGABEN & VERS DER WOCHE -->
+    <!-- 4. CHURCH AUFGABEN & VERS DER WOCHE -->
     <div class="two-col-grid">
       <!-- Church / Volunteer Tasks -->
       <section class="card">

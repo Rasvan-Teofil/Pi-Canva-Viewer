@@ -14,11 +14,13 @@
       "enabled_modes": [
         "canva",
         "dashboard",
+        "notion",
         "verse"
       ],
       "durations_sec": {
         "canva": 180,
         "dashboard": 60,
+        "notion": 90,
         "verse": 45
       }
     }
@@ -28,6 +30,29 @@
     "embed_url": "https://www.canva.com/design/DAGg9nZyL2Y/LG_XWtXLE4tpv9uMccc18Q/view?embed",
     "title": "ICF Heilbronn – Celebration & Info Loop",
     "use_xdotool_autoplay": true
+  },
+  "notion_view": {
+    "title": "🧩 Volunteer Aufgaben (Notion Live-View)",
+    "url": "https://icfhn.notion.site/ebd/c19003181cd6401c976e2d94a68a0561?v=34b4d2b017bd80d491bb000c6c3a30e3",
+    "embed_url": "https://icfhn.notion.site/ebd/c19003181cd6401c976e2d94a68a0561?v=34b4d2b017bd80d491bb000c6c3a30e3",
+    "subdomain": "icfhn",
+    "show_in_dashboard": false,
+    "fullscreen_without_header": false,
+    "auto_refresh_min": 0,
+    "presets": [
+      {
+        "id": "preset-volunteer-board",
+        "title": "🧩 Volunteer Aufgaben (Board: New & Progress)",
+        "url": "https://icfhn.notion.site/ebd/c19003181cd6401c976e2d94a68a0561?v=34b4d2b017bd80d491bb000c6c3a30e3",
+        "embed_url": "https://icfhn.notion.site/ebd/c19003181cd6401c976e2d94a68a0561?v=34b4d2b017bd80d491bb000c6c3a30e3"
+      },
+      {
+        "id": "preset-volunteer-table",
+        "title": "📋 Volunteer Aufgaben (Tabelle)",
+        "url": "https://icfhn.notion.site/ebd/c19003181cd6401c976e2d94a68a0561?v=cff6839b9f0345e6a774c8940c92cb08",
+        "embed_url": "https://icfhn.notion.site/ebd/c19003181cd6401c976e2d94a68a0561?v=cff6839b9f0345e6a774c8940c92cb08"
+      }
+    ]
   },
   "verse_of_the_week": {
     "title": "Vers der Woche",

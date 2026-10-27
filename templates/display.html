@@ -46,22 +46,32 @@
   <!-- VIEW 2: CHURCH & VOLUNTEER DASHBOARD -->
   <main id="view-dashboard" class="screen-view">
     <div class="dashboard-grid">
-      <!-- Left Column: Church & Volunteer Tasks -->
-      <section class="panel tasks-panel">
+      <!-- Left Column: Church & Volunteer Tasks OR Live Notion Database Embed -->
+      <section id="dash-left-panel" class="panel tasks-panel">
         <div class="panel-header">
           <div>
-            <span class="eyebrow">TEAM &amp; SPACE OPERATIONS</span>
-            <h2>🧩 Church &amp; Volunteer Aufgaben</h2>
+            <span id="dash-left-eyebrow" class="eyebrow">TEAM &amp; SPACE OPERATIONS</span>
+            <h2 id="dash-left-title">🧩 Church &amp; Volunteer Aufgaben</h2>
           </div>
           <div id="task-counters" class="task-counters">
             <span class="counter-chip todo">0 Offen</span>
             <span class="counter-chip progress">0 In Arbeit</span>
             <span class="counter-chip done">0 Erledigt</span>
           </div>
+          <span id="dash-notion-badge" class="mode-pill hidden">🗂️ LIVE NOTION VIEW</span>
         </div>
 
         <div id="tasks-container" class="tasks-list">
           <!-- Populated dynamically via display.js -->
+        </div>
+
+        <div id="dash-notion-container" class="dash-notion-container hidden">
+          <iframe
+            id="dash-notion-iframe"
+            class="notion-dash-frame"
+            src="about:blank"
+            allowfullscreen="allowfullscreen"
+          ></iframe>
         </div>
       </section>
 
@@ -95,7 +105,21 @@
     </div>
   </main>
 
-  <!-- VIEW 3: VERSE OF THE WEEK FULLSCREEN SLIDE -->
+  <!-- VIEW 3: PUBLISHED NOTION DATABASE / EMBED VIEW -->
+  <main id="view-notion" class="screen-view hidden">
+    <iframe
+      id="notion-iframe"
+      class="notion-frame"
+      src="about:blank"
+      allowfullscreen="allowfullscreen"
+    ></iframe>
+    <div id="notion-floating-badge" class="canva-floating-badge">
+      <span>🗂️ Notion View</span>
+      <span id="notion-title-label">🧩 Volunteer Aufgaben</span>
+    </div>
+  </main>
+
+  <!-- VIEW 4: VERSE OF THE WEEK FULLSCREEN SLIDE -->
   <main id="view-verse" class="screen-view hidden">
     <div class="verse-full-container">
       <div class="verse-full-card">

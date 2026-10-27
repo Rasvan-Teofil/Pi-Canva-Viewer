@@ -144,7 +144,7 @@ body {
 /* Mode Grid */
 .mode-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 16px;
   margin-bottom: 18px;
 }
@@ -519,4 +519,16 @@ textarea {
   font-weight: 700;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
   z-index: 100;
+}
+
+.notion-toggles-box {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.admin-task-item.preset-active {
+  border-color: var(--emerald);
+  background: rgba(16, 185, 129, 0.08);
 }

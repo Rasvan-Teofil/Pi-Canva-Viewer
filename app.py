@@ -3,10 +3,11 @@
 ICF Church Screen & Raspberry Pi Canva Kiosk Server
 Zero-dependency Python 3 HTTP + REST server for managing:
 1. Fullscreen Canva Keynote / Presentation Kiosk
-2. ICF Church & Volunteer Tasks Dashboard (with optional Notion sync)
-3. Verse of the Week (Vers der Woche) Fullscreen View
-4. Automatic Playlist / Rotation Mode
-5. Multi-Pi Fleet Control & HDMI-CEC TV Power Scheduling (Night Off / Auto Wake)
+2. ICF Church & Volunteer Tasks Dashboard (with optional Notion sync or live Notion Embed)
+3. Any Published Notion Database / View (Notion Site /ebd/ Embed)
+4. Verse of the Week (Vers der Woche) Fullscreen View
+5. Automatic Playlist / Rotation Mode
+6. Multi-Pi Fleet Control & HDMI-CEC TV Power Scheduling (Night Off / Auto Wake)
 """
 
 import argparse
@@ -22,7 +23,12 @@ from pathlib import Path
 from typing import Any, Dict
 from urllib.parse import urlparse
 
-from modules.config_manager import load_config, save_config, to_canva_embed_url
+from modules.config_manager import (
+    load_config,
+    save_config,
+    to_canva_embed_url,
+    to_notion_embed_url,
+)
 from modules.notion_sync import sync_tasks_from_notion
 from modules.pi_fleet import dispatch_to_node, fetch_fleet_status
 from modules.tv_power import NightPowerScheduler, execute_tv_power
@@ -30,6 +36,8 @@ from modules.tv_power import NightPowerScheduler, execute_tv_power
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
+
+VALID_MODES = ("canva", "dashboard", "notion", "verse", "rotation")
 
 
 def trigger_xdotool_canva_autoplay() -> Dict[str, Any]:
@@ -55,8 +63,70 @@ def trigger_xdotool_canva_autoplay() -> Dict[str, Any]:
     return {"ok": True, "message": "xdotool Canva-Autoplay Sequenz gestartet."}
 
 
+def apply_notion_view_update(cfg: Dict[str, Any], body: Dict[str, Any]) -> Dict[str, Any]:
+    """Update notion_view config and presets in-place and return the updated notion_view dict."""
+    nv = cfg.setdefault("notion_view", {})
+    nv.setdefault("subdomain", "icfhn")
+    nv.setdefault("presets", [])
+
+    action = body.get("action", "update")
+    subdomain = str(body.get("subdomain") or nv.get("subdomain") or "icfhn").strip() or "icfhn"
+    nv["subdomain"] = subdomain
+
+    if action == "delete_preset":
+        pid = body.get("id")
+        nv["presets"] = [p for p in nv.get("presets", []) if p.get("id") != pid]
+        return nv
+
+    if action == "activate_preset":
+        pid = body.get("id")
+        for p in nv.get("presets", []):
+            if p.get("id") == pid:
+                nv["title"] = p.get("title") or nv.get("title") or "Notion Datenbank"
+                nv["url"] = p.get("url") or ""
+                nv["embed_url"] = to_notion_embed_url(nv["url"], subdomain)
+                break
+        if body.get("switch_mode"):
+            cfg.setdefault("display", {})["mode"] = "notion"
+        return nv
+
+    # Regular update or save_preset
+    if "title" in body:
+        nv["title"] = str(body["title"]).strip() or "Notion Datenbank"
+    if "url" in body:
+        raw_url = str(body["url"]).strip()
+        if raw_url:
+            nv["url"] = raw_url
+            nv["embed_url"] = to_notion_embed_url(raw_url, subdomain)
+    if "show_in_dashboard" in body:
+        nv["show_in_dashboard"] = bool(body["show_in_dashboard"])
+    if "fullscreen_without_header" in body:
+        nv["fullscreen_without_header"] = bool(body["fullscreen_without_header"])
+    if "auto_refresh_min" in body:
+        nv["auto_refresh_min"] = max(0, int(body.get("auto_refresh_min") or 0))
+    if body.get("switch_mode"):
+        cfg.setdefault("display", {})["mode"] = "notion"
+
+    if action == "save_preset":
+        preset_url = (body.get("url") or nv.get("url") or "").strip()
+        preset_title = (body.get("title") or nv.get("title") or "Notion Ansicht").strip()
+        if preset_url:
+            embed_url = to_notion_embed_url(preset_url, subdomain)
+            presets = nv.setdefault("presets", [])
+            presets.append(
+                {
+                    "id": f"preset-{uuid.uuid4().hex[:6]}",
+                    "title": preset_title,
+                    "url": preset_url,
+                    "embed_url": embed_url,
+                }
+            )
+
+    return nv
+
+
 class KioskRequestHandler(BaseHTTPRequestHandler):
-    server_version = "PiCanvaChurchKiosk/2.0"
+    server_version = "PiCanvaChurchKiosk/2.1"
 
     def log_message(self, fmt: str, *args: Any) -> None:
         # Quiet logging for frequent polling
@@ -167,12 +237,12 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
         # 1. Switch Display Mode / Rotation Settings
         if path == "/api/display/mode":
             mode = body.get("mode")
-            if mode in ("canva", "dashboard", "verse", "rotation"):
+            if mode in VALID_MODES:
                 cfg.setdefault("display", {})["mode"] = mode
             if "durations_sec" in body:
                 durations = body["durations_sec"]
                 rot = cfg.setdefault("display", {}).setdefault("rotation", {}).setdefault("durations_sec", {})
-                for k in ("canva", "dashboard", "verse"):
+                for k in ("canva", "dashboard", "notion", "verse"):
                     if k in durations and int(durations[k]) >= 5:
                         rot[k] = int(durations[k])
             if "enabled_modes" in body and isinstance(body["enabled_modes"], list):
@@ -280,6 +350,13 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
             self._send_json(res)
             return
 
+        # 7b. Configure Generic Published Notion Database / Embed View & Presets
+        if path == "/api/notion/view":
+            nv = apply_notion_view_update(cfg, body)
+            save_config(cfg)
+            self._send_json({"ok": True, "notion_view": nv, "display": cfg.get("display", {})})
+            return
+
         # 8. Manage Events
         if path == "/api/events":
             action = body.get("action", "add")
@@ -351,13 +428,14 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
         # 12. Multi-Pi Fleet Command Dispatch (Single Pi or Broadcast to ALL Pis)
         if path == "/api/fleet/command":
             target = body.get("target", "pi-local")  # 'all' or specific node id
-            cmd_type = body.get("command")  # 'mode' | 'tv_power' | 'reload'
+            cmd_type = body.get("command")  # 'mode' | 'tv_power' | 'reload' | 'notion_view'
             payload = body.get("payload", {})
 
             endpoint_map = {
                 "mode": "/api/display/mode",
                 "tv_power": "/api/tv/power",
                 "reload": "/api/display/reload",
+                "notion_view": "/api/notion/view",
             }
             endpoint = endpoint_map.get(cmd_type)
             if not endpoint:
@@ -373,7 +451,8 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
                     # Execute directly on this local instance
                     if cmd_type == "mode":
                         mode = payload.get("mode", "dashboard")
-                        cfg.setdefault("display", {})["mode"] = mode
+                        if mode in VALID_MODES:
+                            cfg.setdefault("display", {})["mode"] = mode
                         save_config(cfg)
                         results.append({"node_id": node["id"], "name": node["name"], "ok": True, "mode": mode})
                     elif cmd_type == "tv_power":
@@ -384,6 +463,10 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
                         disp["reload_token"] = int(disp.get("reload_token", 1)) + 1
                         save_config(cfg)
                         results.append({"node_id": node["id"], "name": node["name"], "ok": True})
+                    elif cmd_type == "notion_view":
+                        nv = apply_notion_view_update(cfg, payload)
+                        save_config(cfg)
+                        results.append({"node_id": node["id"], "name": node["name"], "ok": True, "notion_view": nv})
                 else:
                     results.append(dispatch_to_node(node, endpoint, payload))
 

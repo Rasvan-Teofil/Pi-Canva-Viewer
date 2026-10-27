@@ -8,10 +8,13 @@
   let rotationIndex = 0;
   let rotationElapsedSec = 0;
   let lastCanvaSrc = "";
+  let lastNotionSrc = "";
+  let lastDashNotionSrc = "";
 
   const MODE_LABELS = {
     canva: "CANVA KEYNOTE",
     dashboard: "CHURCH DASHBOARD",
+    notion: "NOTION DATENBANK",
     verse: "VERS DER WOCHE",
     rotation: "AUTO-ROTATION (LOOP)",
   };
@@ -47,7 +50,7 @@
 
   function setVisibleView(viewName, isRotation) {
     currentActiveView = viewName;
-    const views = ["canva", "dashboard", "verse"];
+    const views = ["canva", "dashboard", "notion", "verse"];
     views.forEach((v) => {
       const el = document.getElementById(`view-${v}`);
       if (el) {
@@ -55,8 +58,16 @@
       }
     });
 
-    // Fullscreen Canva without top bar when purely in canva mode
+    const notionFullscreen = Boolean(
+      appState && appState.notion_view && appState.notion_view.fullscreen_without_header
+    );
+
+    // Fullscreen Canva or Notion without top bar when configured
     document.body.classList.toggle("canva-fullscreen", viewName === "canva" && !isRotation);
+    document.body.classList.toggle(
+      "notion-fullscreen",
+      viewName === "notion" && !isRotation && notionFullscreen
+    );
   }
 
   function renderState(state) {
@@ -81,19 +92,60 @@
     }
     document.getElementById("canva-title-label").textContent = canvaCfg.title || "Canva Präsentation";
 
+    // 2b. Published Notion Database / View Iframe (Dedicated Mode + Optional Dashboard Panel)
+    const notionCfg = state.notion_view || {};
+    const notionEmbedUrl = notionCfg.embed_url || notionCfg.url || "";
+    const notionIframe = document.getElementById("notion-iframe");
+    if (notionIframe && notionEmbedUrl && notionEmbedUrl !== lastNotionSrc) {
+      lastNotionSrc = notionEmbedUrl;
+      notionIframe.src = notionEmbedUrl;
+    }
+    const notionTitleLabel = document.getElementById("notion-title-label");
+    if (notionTitleLabel) {
+      notionTitleLabel.textContent = notionCfg.title || "Notion Datenbank";
+    }
+
+    const showNotionInDash = Boolean(notionCfg.show_in_dashboard && notionEmbedUrl);
+    const tasksContainer = document.getElementById("tasks-container");
+    const taskCounters = document.getElementById("task-counters");
+    const dashNotionContainer = document.getElementById("dash-notion-container");
+    const dashNotionBadge = document.getElementById("dash-notion-badge");
+    const dashNotionIframe = document.getElementById("dash-notion-iframe");
+    const dashLeftTitle = document.getElementById("dash-left-title");
+    const dashLeftEyebrow = document.getElementById("dash-left-eyebrow");
+
+    if (showNotionInDash) {
+      tasksContainer.classList.add("hidden");
+      taskCounters.classList.add("hidden");
+      dashNotionContainer.classList.remove("hidden");
+      dashNotionBadge.classList.remove("hidden");
+      dashLeftEyebrow.textContent = "NOTION LIVE DATENBANK";
+      dashLeftTitle.textContent = notionCfg.title || "🗂️ Notion Datenbank";
+      if (dashNotionIframe && notionEmbedUrl !== lastDashNotionSrc) {
+        lastDashNotionSrc = notionEmbedUrl;
+        dashNotionIframe.src = notionEmbedUrl;
+      }
+    } else {
+      tasksContainer.classList.remove("hidden");
+      taskCounters.classList.remove("hidden");
+      dashNotionContainer.classList.add("hidden");
+      dashNotionBadge.classList.add("hidden");
+      dashLeftEyebrow.textContent = "TEAM & SPACE OPERATIONS";
+      dashLeftTitle.textContent = "🧩 Church & Volunteer Aufgaben";
+    }
+
     // 3. Tasks Board
     const tasks = state.tasks || [];
     const todoCount = tasks.filter((t) => t.status === "todo").length;
     const progCount = tasks.filter((t) => t.status === "in_progress").length;
     const doneCount = tasks.filter((t) => t.status === "done").length;
 
-    document.getElementById("task-counters").innerHTML = `
+    taskCounters.innerHTML = `
       <span class="counter-chip todo">${todoCount} Offen</span>
       <span class="counter-chip progress">${progCount} In Arbeit</span>
       <span class="counter-chip done">${doneCount} Erledigt</span>
     `;
 
-    const tasksContainer = document.getElementById("tasks-container");
     tasksContainer.innerHTML = tasks
       .slice(0, 6)
       .map(
@@ -169,8 +221,11 @@
     if (configuredMode !== "rotation") return;
 
     const rotCfg = (appState.display && appState.display.rotation) || {};
-    const modes = (rotCfg.enabled_modes && rotCfg.enabled_modes.length ? rotCfg.enabled_modes : ["canva", "dashboard", "verse"]);
-    const durations = rotCfg.durations_sec || { canva: 180, dashboard: 60, verse: 45 };
+    const modes =
+      rotCfg.enabled_modes && rotCfg.enabled_modes.length
+        ? rotCfg.enabled_modes
+        : ["canva", "dashboard", "notion", "verse"];
+    const durations = rotCfg.durations_sec || { canva: 180, dashboard: 60, notion: 90, verse: 45 };
 
     if (rotationIndex >= modes.length) rotationIndex = 0;
     const activeSubMode = modes[rotationIndex];
