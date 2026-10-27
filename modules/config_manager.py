@@ -1,8 +1,12 @@
 import json
+import os
 import re
 import threading
+import tempfile
+from contextlib import contextmanager
+from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Iterator
 from urllib.parse import urlparse, urlunparse
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -115,6 +119,13 @@ def load_config() -> Dict[str, Any]:
         return data
 
 
+@contextmanager
+def config_write_lock() -> Iterator[None]:
+    """Serialize complete read-modify-write API operations in this server process."""
+    with _LOCK:
+        yield
+
+
 def save_config(data: Dict[str, Any]) -> Dict[str, Any]:
     with _LOCK:
         canva_cfg = data.get("canva", {})
@@ -129,6 +140,28 @@ def save_config(data: Dict[str, Any]) -> Dict[str, Any]:
             notion_view["embed_url"] = to_notion_embed_url(notion_view["url"], sub)
 
         CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
-        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+        # A power loss while writing must not leave a half-written JSON file behind.
+        fd, tmp_name = tempfile.mkstemp(prefix=f".{CONFIG_FILE.name}.", suffix=".tmp", dir=CONFIG_FILE.parent)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+                f.write("\n")
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(tmp_name, CONFIG_FILE)
+        finally:
+            try:
+                os.unlink(tmp_name)
+            except FileNotFoundError:
+                pass
         return data
+
+
+def public_config(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Return display-safe state without credentials or fleet control secrets."""
+    safe = deepcopy(data)
+    safe.get("notion", {}).pop("api_token", None)
+    for node in safe.get("pi_fleet", []):
+        if isinstance(node, dict):
+            node.pop("api_token", None)
+    return safe

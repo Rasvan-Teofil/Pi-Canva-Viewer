@@ -12,32 +12,66 @@ Zero-dependency Python 3 HTTP + REST server for managing:
 
 import argparse
 import datetime
+import hmac
 import json
 import mimetypes
 import os
 import shutil
 import subprocess
 import uuid
+from functools import wraps
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Dict
 from urllib.parse import urlparse
 
 from modules.config_manager import (
+    config_write_lock,
     load_config,
+    public_config,
     save_config,
     to_canva_embed_url,
     to_notion_embed_url,
 )
 from modules.notion_sync import sync_tasks_from_notion
-from modules.pi_fleet import dispatch_to_node, fetch_fleet_status
-from modules.tv_power import NightPowerScheduler, execute_tv_power
+from modules.pi_fleet import fetch_fleet_status
+from modules.tv_power import NightPowerScheduler, apply_schedule_update, execute_tv_power
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
 
 VALID_MODES = ("canva", "dashboard", "notion", "verse", "rotation")
+
+
+def serialize_config_writes(method: Any) -> Any:
+    """Keep a whole REST mutation atomic, not just the final file write."""
+
+    @wraps(method)
+    def wrapped(self: Any, *args: Any, **kwargs: Any) -> Any:
+        with config_write_lock():
+            return method(self, *args, **kwargs)
+
+    return wrapped
+
+
+def valid_web_url(value: Any, *, canva_only: bool = False) -> str | None:
+    """Accept only plain HTTP(S) URLs; fleet hosts must never contain credentials."""
+    raw = str(value or "").strip()
+    try:
+        parsed = urlparse(raw)
+        port = parsed.port  # Accessing it validates an out-of-range port.
+    except ValueError:
+        return None
+    if parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.username or parsed.password:
+        return None
+    if canva_only:
+        hostname = parsed.hostname.lower()
+        if hostname != "canva.com" and not hostname.endswith(".canva.com"):
+            return None
+    if port is not None and not 1 <= port <= 65535:
+        return None
+    return raw
 
 
 def trigger_xdotool_canva_autoplay() -> Dict[str, Any]:
@@ -140,9 +174,27 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(raw)))
         self.send_header("Cache-Control", "no-store")
-        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(raw)
+
+    def _require_admin(self) -> bool:
+        """Protect every control API from devices merely connected to the LAN."""
+        expected = os.environ.get("PI_SCREEN_ADMIN_TOKEN", "").strip()
+        if not expected:
+            self._send_json(
+                {
+                    "ok": False,
+                    "error": "Der Server hat keinen PI_SCREEN_ADMIN_TOKEN. Bitte ./install.sh ausführen.",
+                },
+                status=503,
+            )
+            return False
+
+        supplied = self.headers.get("X-API-Token", "").strip()
+        if not hmac.compare_digest(supplied, expected):
+            self._send_json({"ok": False, "error": "Nicht autorisiert."}, status=401)
+            return False
+        return True
 
     def _send_file(self, file_path: Path, content_type: str | None = None) -> None:
         if not file_path.exists() or not file_path.is_file():
@@ -166,9 +218,7 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
 
     def do_OPTIONS(self) -> None:
         self.send_response(204)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Allow", "GET, POST, OPTIONS")
         self.end_headers()
 
     def do_GET(self) -> None:
@@ -186,18 +236,21 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
         if path.startswith("/static/"):
             rel = path[len("/static/") :]
             target = (STATIC_DIR / rel).resolve()
-            if str(target).startswith(str(STATIC_DIR)):
+            try:
+                target.relative_to(STATIC_DIR.resolve())
+            except ValueError:
+                self.send_error(403, "Forbidden")
+                return
+            else:
                 self._send_file(target)
                 return
-            self.send_error(403, "Forbidden")
-            return
 
         if path == "/api/state":
             cfg = load_config()
             now = datetime.datetime.now()
             self._send_json(
                 {
-                    **cfg,
+                    **public_config(cfg),
                     "server_time": {
                         "iso": now.isoformat(),
                         "time_hm": now.strftime("%H:%M"),
@@ -218,11 +271,14 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
             return
 
         if path == "/api/fleet/status":
+            if not self._require_admin():
+                return
             self._send_json({"ok": True, "nodes": fetch_fleet_status()})
             return
 
         self.send_error(404, "Endpoint not found")
 
+    @serialize_config_writes
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
         path = parsed.path
@@ -230,6 +286,9 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
             body = self._read_json_body()
         except Exception as exc:
             self._send_json({"ok": False, "error": f"Ungültiges JSON: {exc}"}, status=400)
+            return
+
+        if not self._require_admin():
             return
 
         cfg = load_config()
@@ -246,7 +305,12 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
                     if k in durations and int(durations[k]) >= 5:
                         rot[k] = int(durations[k])
             if "enabled_modes" in body and isinstance(body["enabled_modes"], list):
-                cfg["display"].setdefault("rotation", {})["enabled_modes"] = body["enabled_modes"]
+                enabled_modes = body["enabled_modes"]
+                allowed_modes = {"canva", "dashboard", "notion", "verse"}
+                if not enabled_modes or any(mode not in allowed_modes for mode in enabled_modes):
+                    self._send_json({"ok": False, "error": "Ungültige Ansichten für die Rotation."}, status=400)
+                    return
+                cfg["display"].setdefault("rotation", {})["enabled_modes"] = enabled_modes
             if "device_name" in body:
                 cfg.setdefault("device", {})["name"] = str(body["device_name"]).strip()
             if "device_location" in body:
@@ -273,6 +337,9 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
             title = (body.get("title") or cfg.get("canva", {}).get("title") or "").strip()
             if not url:
                 self._send_json({"ok": False, "error": "Canva URL darf nicht leer sein."}, status=400)
+                return
+            if not valid_web_url(url, canva_only=True):
+                self._send_json({"ok": False, "error": "Bitte einen gültigen canva.com Design-Link angeben."}, status=400)
                 return
             cfg["canva"] = {
                 "url": url,
@@ -389,17 +456,11 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
         # 10. TV Night Schedule Configuration
         if path == "/api/tv/schedule":
             tv_cfg = cfg.setdefault("tv_power", {})
-            sched = tv_cfg.setdefault("schedule", {})
-            if "enabled" in body:
-                sched["enabled"] = bool(body["enabled"])
-            if "off_time" in body:
-                sched["off_time"] = str(body["off_time"]).strip()
-            if "on_time" in body:
-                sched["on_time"] = str(body["on_time"]).strip()
-            if "active_days" in body and isinstance(body["active_days"], list):
-                sched["active_days"] = [int(d) for d in body["active_days"]]
-            if "cec_address" in body:
-                tv_cfg["cec_address"] = str(body["cec_address"]).strip()
+            try:
+                apply_schedule_update(tv_cfg, body)
+            except ValueError as exc:
+                self._send_json({"ok": False, "error": str(exc)}, status=400)
+                return
             save_config(cfg)
             self._send_json({"ok": True, "tv_power": tv_cfg})
             return
@@ -409,12 +470,16 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
             action = body.get("action", "add")
             fleet = cfg.setdefault("pi_fleet", [])
             if action == "add":
+                host = valid_web_url(body.get("host"))
+                if not host:
+                    self._send_json({"ok": False, "error": "Bitte eine gültige Pi-URL ohne Zugangsdaten angeben."}, status=400)
+                    return
                 fleet.append(
                     {
                         "id": f"pi-{uuid.uuid4().hex[:6]}",
                         "name": (body.get("name") or "Neuer Raspberry Pi").strip(),
                         "location": (body.get("location") or "Church Space").strip(),
-                        "host": (body.get("host") or "http://raspberrypi.local:8080").strip(),
+                        "host": host.rstrip("/"),
                         "is_local": False,
                     }
                 )
@@ -436,6 +501,7 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
                 "tv_power": "/api/tv/power",
                 "reload": "/api/display/reload",
                 "notion_view": "/api/notion/view",
+                "schedule": "/api/tv/schedule",
             }
             endpoint = endpoint_map.get(cmd_type)
             if not endpoint:
@@ -467,8 +533,23 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
                         nv = apply_notion_view_update(cfg, payload)
                         save_config(cfg)
                         results.append({"node_id": node["id"], "name": node["name"], "ok": True, "notion_view": nv})
+                    elif cmd_type == "schedule":
+                        try:
+                            apply_schedule_update(cfg.setdefault("tv_power", {}), payload)
+                        except ValueError as exc:
+                            results.append({"node_id": node["id"], "name": node["name"], "ok": False, "error": str(exc)})
+                        else:
+                            save_config(cfg)
+                            results.append({"node_id": node["id"], "name": node["name"], "ok": True})
                 else:
-                    results.append(dispatch_to_node(node, endpoint, payload))
+                    results.append(
+                        {
+                            "node_id": node.get("id"),
+                            "name": node.get("name"),
+                            "ok": False,
+                            "error": "Sichere Fernsteuerung ist noch nicht konfiguriert.",
+                        }
+                    )
 
             self._send_json({"ok": True, "target": target, "results": results})
             return

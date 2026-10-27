@@ -1,5 +1,6 @@
 (() => {
   let currentState = null;
+  const ADMIN_TOKEN_KEY = "pi-screen-admin-token";
 
   const STATUS_LABELS = {
     todo: "⏳ Offen",
@@ -56,13 +57,43 @@
     }
   }
 
+  function getAdminToken() {
+    return sessionStorage.getItem(ADMIN_TOKEN_KEY) || "";
+  }
+
+  function authHeaders(extra = {}) {
+    const token = getAdminToken();
+    return token ? { ...extra, "X-API-Token": token } : extra;
+  }
+
   async function apiPost(url, payload) {
-    const resp = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload || {}),
-    });
-    return resp.json();
+    try {
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify(payload || {}),
+      });
+      const data = await resp.json();
+      return resp.ok ? data : { ...data, ok: false, error: data.error || `HTTP ${resp.status}` };
+    } catch (error) {
+      return { ok: false, error: "Server nicht erreichbar." };
+    }
+  }
+
+  async function apiGet(url) {
+    try {
+      const resp = await fetch(url, { headers: authHeaders() });
+      const data = await resp.json();
+      return resp.ok ? data : { ...data, ok: false, error: data.error || `HTTP ${resp.status}` };
+    } catch (error) {
+      return { ok: false, error: "Server nicht erreichbar." };
+    }
+  }
+
+  function commandError(result) {
+    if (!result || !result.ok) return result && result.error ? result.error : "Befehl fehlgeschlagen.";
+    const failed = Array.isArray(result.results) && result.results.find((entry) => !entry.ok);
+    return failed ? (failed.error || `Befehl an ${failed.name || "Pi"} fehlgeschlagen.`) : "";
   }
 
   function populateUI(state) {
@@ -116,6 +147,10 @@
     document.getElementById("sched-enabled").checked = sched.enabled !== false;
     document.getElementById("sched-off-time").value = sched.off_time || "22:30";
     document.getElementById("sched-on-time").value = sched.on_time || "08:00";
+    const activeDays = new Set(sched.active_days || [0, 1, 2, 3, 4, 5, 6]);
+    document.querySelectorAll("#sched-active-days input").forEach((input) => {
+      input.checked = activeDays.has(Number(input.value));
+    });
     document.getElementById("tv-last-action").textContent =
       `Letzte CEC-Aktion: ${tv.last_action || "–"} (${tv.last_action_time || "beim Start"})`;
 
@@ -257,9 +292,11 @@
 
   async function refreshFleetStatus() {
     try {
-      const resp = await fetch("/api/fleet/status");
-      const data = await resp.json();
-      if (!data.ok) return;
+      const data = await apiGet("/api/fleet/status");
+      if (!data.ok) {
+        if (data.error === "Nicht autorisiert.") showToast("Bitte zuerst den Admin-Schlüssel eingeben.");
+        return;
+      }
       const list = document.getElementById("fleet-list");
       list.innerHTML = (data.nodes || [])
         .map(
@@ -293,12 +330,12 @@
 
       list.querySelectorAll("[data-node-mode]").forEach((btn) => {
         btn.addEventListener("click", async () => {
-          await apiPost("/api/fleet/command", {
+          const result = await apiPost("/api/fleet/command", {
             target: btn.dataset.node,
             command: "mode",
             payload: { mode: btn.dataset.nodeMode },
           });
-          showToast(`Modus "${btn.dataset.nodeMode}" an Pi gesendet!`);
+          showToast(commandError(result) || `Modus "${btn.dataset.nodeMode}" an Pi gesendet!`);
           loadInitialState();
           refreshFleetStatus();
         });
@@ -306,12 +343,12 @@
 
       list.querySelectorAll("[data-node-pwr]").forEach((btn) => {
         btn.addEventListener("click", async () => {
-          await apiPost("/api/fleet/command", {
+          const result = await apiPost("/api/fleet/command", {
             target: btn.dataset.node,
             command: "tv_power",
             payload: { action: btn.dataset.nodePwr },
           });
-          showToast(`HDMI-CEC Power "${btn.dataset.nodePwr}" gesendet!`);
+          showToast(commandError(result) || `HDMI-CEC Power "${btn.dataset.nodePwr}" gesendet!`);
           loadInitialState();
           refreshFleetStatus();
         });
@@ -339,12 +376,13 @@
     btn.addEventListener("click", async () => {
       const target = document.getElementById("command-target").value;
       const mode = btn.dataset.mode;
+      let result;
       if (target === "pi-local") {
-        await apiPost("/api/display/mode", { mode });
+        result = await apiPost("/api/display/mode", { mode });
       } else {
-        await apiPost("/api/fleet/command", { target, command: "mode", payload: { mode } });
+        result = await apiPost("/api/fleet/command", { target, command: "mode", payload: { mode } });
       }
-      showToast(`Anzeige-Modus auf "${mode.toUpperCase()}" umgeschaltet!`);
+      showToast(commandError(result) || `Anzeige-Modus auf "${mode.toUpperCase()}" umgeschaltet!`);
       loadInitialState();
       refreshFleetStatus();
     });
@@ -430,33 +468,54 @@
 
   document.getElementById("btn-reload-display").addEventListener("click", async () => {
     const target = document.getElementById("command-target").value;
-    await apiPost("/api/fleet/command", { target, command: "reload", payload: {} });
-    showToast("Reload-Signal an TV-Display gesendet!");
+    const result = await apiPost("/api/fleet/command", { target, command: "reload", payload: {} });
+    showToast(commandError(result) || "Reload-Signal an TV-Display gesendet!");
   });
 
   document.querySelectorAll("[data-power]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const target = document.getElementById("command-target").value;
       const action = btn.dataset.power;
+      let result;
       if (target === "pi-local") {
-        await apiPost("/api/tv/power", { action });
+        result = await apiPost("/api/tv/power", { action });
       } else {
-        await apiPost("/api/fleet/command", { target, command: "tv_power", payload: { action } });
+        result = await apiPost("/api/fleet/command", { target, command: "tv_power", payload: { action } });
       }
-      showToast(`HDMI-CEC Befehl "${action}" ausgeführt!`);
+      showToast(commandError(result) || `HDMI-CEC Befehl "${action}" ausgeführt!`);
       loadInitialState();
       refreshFleetStatus();
     });
   });
 
   document.getElementById("btn-save-schedule").addEventListener("click", async () => {
-    await apiPost("/api/tv/schedule", {
+    const activeDays = Array.from(document.querySelectorAll("#sched-active-days input:checked"), (input) => Number(input.value));
+    const res = await apiPost("/api/tv/schedule", {
       enabled: document.getElementById("sched-enabled").checked,
       off_time: document.getElementById("sched-off-time").value,
       on_time: document.getElementById("sched-on-time").value,
+      active_days: activeDays,
     });
-    showToast("TV Nachtabschaltungs-Zeitplan gespeichert!");
+    showToast(res.ok ? "TV-Zeitplan gespeichert!" : (res.error || "Zeitplan konnte nicht gespeichert werden."));
     loadInitialState();
+  });
+
+  document.getElementById("btn-save-admin-token").addEventListener("click", async () => {
+    const token = document.getElementById("admin-token").value.trim();
+    if (!token) {
+      sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+      showToast("Admin-Schlüssel eingeben.");
+      return;
+    }
+    sessionStorage.setItem(ADMIN_TOKEN_KEY, token);
+    const result = await apiGet("/api/fleet/status");
+    if (result.ok) {
+      showToast("Admin-Schlüssel akzeptiert.");
+      refreshFleetStatus();
+    } else {
+      sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+      showToast(result.error || "Admin-Schlüssel wurde nicht akzeptiert.");
+    }
   });
 
   document.getElementById("btn-add-pi").addEventListener("click", async () => {
@@ -539,6 +598,7 @@
     showToast(res.message || res.error || "xdotool Befehl ausgeführt");
   });
 
+  document.getElementById("admin-token").value = getAdminToken();
   loadInitialState();
   refreshFleetStatus();
 })();

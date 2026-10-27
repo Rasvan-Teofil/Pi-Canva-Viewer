@@ -1,0 +1,21 @@
+[Unit]
+Description=Pi Screen control server
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=__PI_SCREEN_USER__
+Group=__PI_SCREEN_GROUP__
+WorkingDirectory=__PROJECT_DIR__
+EnvironmentFile=/etc/pi-screen/runtime.env
+ExecStart=/usr/bin/python3 -u app.py
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

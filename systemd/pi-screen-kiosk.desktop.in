@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Pi Screen Kiosk
+Comment=Launch the local Pi Screen display in Chromium kiosk mode
+Exec=__PROJECT_DIR__/scripts/kiosk_supervisor.sh
+Terminal=false
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Phase=Application

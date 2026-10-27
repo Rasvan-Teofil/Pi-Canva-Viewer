@@ -2,6 +2,44 @@
 
 Dieses Projekt automatisiert die Anzeige von **Canva-Präsentationen (Keynotes)**, einem **Church- & Volunteer-Aufgaben-Dashboard** sowie dem **Vers der Woche** im Vollbild-Kioskmodus auf einem oder mehreren Raspberry Pis – inklusive **zentraler Web-Steuerung (Multi-Pi Control Center)** und **automatischer TV-Power-Steuerung (Nachtabschaltung & Auto-Wakeup) über HDMI-CEC**.
 
+## Schnellstart: Ubuntu auf dem Raspberry Pi
+
+Der unterstützte Weg ist absichtlich auf einen einzigen Installationsschritt reduziert. Nach dem Klonen bzw. Auschecken des gewünschten Branches genügt auf dem Pi:
+
+```bash
+sudo bash ./install.sh
+```
+
+Das Skript ist wiederholbar und erledigt Folgendes: installiert die benötigten Ubuntu-Pakete, richtet den Webserver als systemd-Dienst ein, erzeugt einen Admin-Schlüssel, aktiviert den grafischen Autostart und startet Chromium nach jedem Boot im Kioskmodus neu. Der Kiosk startet auch wieder, falls Chromium abstürzt.
+
+Beim Upgrade des ursprünglichen Prototyps beendet das Skript außerdem dessen alte `pi_kiosk_server.service`- und `start_canva.service`-Instanzen, damit nicht zwei Server oder Browser um Port und Bildschirm konkurrieren.
+
+Voraussetzung ist **Ubuntu Desktop für Raspberry Pi** (22.04 oder neuer) mit einem normalen, nicht-root Benutzer. Auf Ubuntu Server installiert dieser Aufruf die benötigte schlanke Desktop-Umgebung ebenfalls automatisiert:
+
+```bash
+sudo bash ./install.sh --install-desktop
+```
+
+Nach der Installation einmal neu starten. Danach erscheint die Anzeige selbstständig am HDMI-Bildschirm. Die Ausgabe des Installers enthält den einmalig erzeugten Admin-Schlüssel.
+
+- TV-Ansicht auf dem Pi: `http://127.0.0.1:8080/display`
+- Administration im lokalen Netz: `http://<PI-IP>:8080/admin`
+- Admin-Schlüssel: in der Kopfzeile der Administration einfügen; er wird nur für die laufende Browser-Sitzung gespeichert.
+
+Der Schlüssel liegt auf dem Pi mit restriktiven Rechten in `/etc/pi-screen/runtime.env`. Bei einer Aktualisierung des ausgecheckten Branches genügt danach erneut `sudo bash ./install.sh`; der Schlüssel bleibt erhalten und der Dienst wird neu gestartet.
+
+### Sicherheit und CEC-Hinweis
+
+Alle schreibenden Steuerbefehle (Modus, Canva-Link, Zeitplan, TV-Power usw.) verlangen den Admin-Schlüssel. Der reine TV-Display-Endpunkt darf ohne Schlüssel gelesen werden, enthält aber keine Notion- oder Fleet-Zugangsdaten. CORS für fremde Webseiten ist deaktiviert.
+
+HDMI-CEC kann einen kompatiblen Fernseher in den Standby schicken und wieder wecken. Es schaltet **nicht garantiert die Netzspannung** ab. CEC muss am Fernseher aktiviert sein (bei Samsung: Anynet+); der mitgelieferte Status meldet einen Fehler, statt wie der alte Prototyp einen simulierten Erfolg anzuzeigen. Für professionelle Displays ohne verlässliches CEC wäre später RS-232, IP-Control oder ein geprüfter Stromschalter nötig.
+
+Der Zeitplan wird beim Booten abgeglichen: Fährt der Pi während der geplanten Öffnungszeit hoch, weckt er den TV erneut. „Aktive Tage“ beziehen sich auf den Beginn des täglichen Anzeigezeitraums und unterstützen auch Zeitfenster über Mitternacht.
+
+### Mehrere Pis
+
+Die lokale Kiosk-Installation ist produktionsbereit vorbereitet. Die bisherige Mehr-Pi-Oberfläche bleibt als Übersicht enthalten. Bevor aktive Befehle sicher zwischen Pis weitergereicht werden, braucht jeder Ziel-Pi eine eindeutig hinterlegte Vertrauensbeziehung bzw. einen Schlüssel. Das wird bewusst nicht über ungeschützte Netzwerkaufrufe gelöst.
+
 ---
 
 ## ✨ Features im Überblick
@@ -54,7 +92,7 @@ Dieses Projekt automatisiert die Anzeige von **Canva-Präsentationen (Keynotes)*
 
 ---
 
-## 🚀 Installation auf dem Raspberry Pi
+## Manuelle Installation (Legacy / nur für Entwicklung)
 
 ### 1. System aktualisieren & Pakete installieren
 
@@ -78,7 +116,7 @@ Anschließend im Browser erreichbar:
 
 ---
 
-## ⚙️ Automatischer Start beim Booten (systemd)
+## Manuelle systemd-Einrichtung (Legacy)
 
 Kopiere die Service-Dateien nach `/etc/systemd/system/` (Benutzername/Pfade bei Bedarf anpassen):
 

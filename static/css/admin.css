@@ -75,7 +75,45 @@ body {
 
 .header-actions {
   display: flex;
+  align-items: center;
   gap: 12px;
+}
+
+.admin-token-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.admin-token-field input {
+  width: 190px;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+}
+
+.schedule-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 10px 0 0;
+  border: 0;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-muted);
+}
+
+.schedule-days legend {
+  padding-right: 8px;
+  font-size: 0.82rem;
+}
+
+.schedule-days label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.84rem;
 }
 
 /* Container & Cards */

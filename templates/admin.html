@@ -16,6 +16,11 @@
       </div>
     </div>
     <div class="header-actions">
+      <label class="admin-token-field">
+        <span>Admin-Schlüssel</span>
+        <input id="admin-token" type="password" autocomplete="current-password" placeholder="Schlüssel aus install.sh" />
+      </label>
+      <button id="btn-save-admin-token" class="btn btn-secondary">🔐 Verbinden</button>
       <a href="/display" target="_blank" class="btn btn-secondary">🖥️ TV-Ansicht öffnen (/display)</a>
       <button id="btn-reload-display" class="btn btn-primary">🔄 Display neu laden</button>
     </div>
@@ -200,7 +205,7 @@
         </div>
 
         <p class="card-help">
-          Steuert den angeschlossenen Fernseher direkt über das HDMI-Kabel via <code>cec-client</code> (Anynet+ / HDMI-CEC) inkl. Fallback auf <code>vcgencmd</code> &amp; DPMS.
+          Steuert den angeschlossenen Fernseher direkt über das HDMI-Kabel via <code>cec-client</code> (Anynet+ / HDMI-CEC). Ein erfolgreicher Status zeigt einen ausgeführten CEC-Befehl; ohne CEC-Unterstützung wird kein TV-Status vorgetäuscht.
         </p>
 
         <div class="power-btn-row">
@@ -227,6 +232,16 @@
             </div>
             <button id="btn-save-schedule" class="btn btn-primary">💾 Zeitplan speichern</button>
           </div>
+          <fieldset class="schedule-days" id="sched-active-days">
+            <legend>Aktive Tage</legend>
+            <label><input type="checkbox" value="0" checked /> Mo</label>
+            <label><input type="checkbox" value="1" checked /> Di</label>
+            <label><input type="checkbox" value="2" checked /> Mi</label>
+            <label><input type="checkbox" value="3" checked /> Do</label>
+            <label><input type="checkbox" value="4" checked /> Fr</label>
+            <label><input type="checkbox" value="5" checked /> Sa</label>
+            <label><input type="checkbox" value="6" checked /> So</label>
+          </fieldset>
           <p id="tv-last-action" class="meta-note">Letzte Aktion: –</p>
         </div>
 
