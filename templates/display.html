@@ -20,6 +20,7 @@
     <div class="header-center">
       <span id="mode-pill" class="mode-pill">CHURCH DASHBOARD</span>
       <span id="tv-power-pill" class="power-pill power-on">HDMI-CEC: ON</span>
+      <span class="keyboard-hint">← Canva &nbsp;·&nbsp; Notion →</span>
     </div>
 
     <div class="clock-group">
@@ -27,6 +28,9 @@
       <div id="live-date" class="live-date">Montag, 26.10.2026</div>
     </div>
   </header>
+
+  <!-- Keeps keyboard navigation in the display shell instead of inside an embedded page. -->
+  <div id="keyboard-capture" class="keyboard-capture" tabindex="-1" aria-hidden="true"></div>
 
   <!-- VIEW 1: CANVA KEYNOTE FULLSCREEN -->
   <main id="view-canva" class="screen-view hidden">

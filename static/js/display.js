@@ -10,6 +10,8 @@
   let lastCanvaSrc = "";
   let lastNotionSrc = "";
   let lastDashNotionSrc = "";
+  let keyboardMode = null;
+  let lastServerDisplayMode = null;
 
   const MODE_LABELS = {
     canva: "CANVA KEYNOTE",
@@ -48,6 +50,42 @@
     if (dateEl) dateEl.textContent = dateStr;
   }
 
+  function focusKeyboardCapture() {
+    const capture = document.getElementById("keyboard-capture");
+    if (capture) capture.focus({ preventScroll: true });
+  }
+
+  function getEffectiveMode(state) {
+    const serverMode = (state.display && state.display.mode) || "dashboard";
+    if (lastServerDisplayMode !== null && serverMode !== lastServerDisplayMode) {
+      // A deliberate change in the admin panel takes priority over a local key switch.
+      keyboardMode = null;
+    }
+    lastServerDisplayMode = serverMode;
+    return forcedMode || keyboardMode || serverMode;
+  }
+
+  function switchPreloadedView(viewName) {
+    if (!appState) return;
+    const source = viewName === "canva"
+      ? ((appState.canva && (appState.canva.embed_url || appState.canva.url)) || "")
+      : ((appState.notion_view && (appState.notion_view.embed_url || appState.notion_view.url)) || "");
+    if (!source) {
+      console.warn(`Die ${viewName === "canva" ? "Canva" : "Notion"}-Ansicht ist noch nicht konfiguriert.`);
+      return;
+    }
+
+    // No API request and no iframe navigation: both views were assigned their
+    // sources during renderState and remain alive while one is hidden.
+    keyboardMode = viewName;
+    rotationElapsedSec = 0;
+    setVisibleView(viewName, false);
+    const modePill = document.getElementById("mode-pill");
+    modePill.textContent = `MANUELL · ${MODE_LABELS[viewName]}`;
+    document.getElementById("rotation-bar").classList.add("hidden");
+    focusKeyboardCapture();
+  }
+
   function setVisibleView(viewName, isRotation) {
     currentActiveView = viewName;
     const views = ["canva", "dashboard", "notion", "verse"];
@@ -68,6 +106,7 @@
       "notion-fullscreen",
       viewName === "notion" && !isRotation && notionFullscreen
     );
+    focusKeyboardCapture();
   }
 
   function renderState(state) {
@@ -202,9 +241,9 @@
       .join("");
 
     // 6. Mode & Rotation handling
-    const configuredMode = forcedMode || (state.display && state.display.mode) || "dashboard";
+    const configuredMode = getEffectiveMode(state);
     const modePill = document.getElementById("mode-pill");
-    modePill.textContent = MODE_LABELS[configuredMode] || configuredMode.toUpperCase();
+    modePill.textContent = `${keyboardMode ? "MANUELL · " : ""}${MODE_LABELS[configuredMode] || configuredMode.toUpperCase()}`;
 
     const rotBar = document.getElementById("rotation-bar");
     if (configuredMode === "rotation") {
@@ -217,7 +256,7 @@
 
   function tickRotation() {
     if (!appState) return;
-    const configuredMode = forcedMode || (appState.display && appState.display.mode) || "dashboard";
+    const configuredMode = forcedMode || keyboardMode || (appState.display && appState.display.mode) || "dashboard";
     if (configuredMode !== "rotation") return;
 
     const rotCfg = (appState.display && appState.display.rotation) || {};
@@ -267,6 +306,22 @@
   }
 
   updateLocalClock();
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      switchPreloadedView("canva");
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      switchPreloadedView("notion");
+    }
+  });
+  window.addEventListener("blur", () => window.setTimeout(focusKeyboardCapture, 0));
+  document.addEventListener("pointerdown", (event) => {
+    if (event.target && event.target.tagName === "IFRAME") {
+      window.setTimeout(focusKeyboardCapture, 0);
+    }
+  }, true);
+  focusKeyboardCapture();
   setInterval(updateLocalClock, 1000);
   setInterval(tickRotation, 1000);
   pollServerState();

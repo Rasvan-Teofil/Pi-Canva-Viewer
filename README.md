@@ -36,6 +36,10 @@ HDMI-CEC kann einen kompatiblen Fernseher in den Standby schicken und wieder wec
 
 Der Zeitplan wird beim Booten abgeglichen: Fährt der Pi während der geplanten Öffnungszeit hoch, weckt er den TV erneut. „Aktive Tage“ beziehen sich auf den Beginn des täglichen Anzeigezeitraums und unterstützen auch Zeitfenster über Mitternacht.
 
+### Sofort zwischen Canva und Notion wechseln
+
+Sobald im Admin-Bereich je ein Canva-Design-Link und eine veröffentlichte Notion-Ansicht hinterlegt sind, lädt die Anzeige beide Embeds bereits im Hintergrund. Mit der linken Pfeiltaste (`←`) wird die Canva-Keynote und mit der rechten Pfeiltaste (`→`) die Notion-Ansicht gezeigt. Der Wechsel erfolgt ausschließlich durch Umschalten der sichtbaren Ansicht: Die iFrames bleiben geladen und die Seiten werden nicht erneut aufgerufen. Eine Änderung im Admin-Bereich oder ein Display-Reload übernimmt wieder die zentral konfigurierte Ansicht.
+
 ### Mehrere Pis
 
 Die lokale Kiosk-Installation ist produktionsbereit vorbereitet. Die bisherige Mehr-Pi-Oberfläche bleibt als Übersicht enthalten. Bevor aktive Befehle sicher zwischen Pis weitergereicht werden, braucht jeder Ziel-Pi eine eindeutig hinterlegte Vertrauensbeziehung bzw. einen Schlüssel. Das wird bewusst nicht über ungeschützte Netzwerkaufrufe gelöst.
