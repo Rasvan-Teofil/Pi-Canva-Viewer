@@ -189,21 +189,21 @@ class KioskRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(raw)
 
     def _require_admin(self) -> bool:
-        """Protect every control API from devices merely connected to the LAN."""
-        expected = os.environ.get("PI_SCREEN_ADMIN_TOKEN", "").strip()
+        """Protect local controls with the deliberately simple screen PIN."""
+        expected = os.environ.get("PI_SCREEN_ADMIN_PIN", "1234").strip()
         if not expected:
             self._send_json(
                 {
                     "ok": False,
-                    "error": "Der Server hat keinen PI_SCREEN_ADMIN_TOKEN. Bitte ./install.sh ausführen.",
+                    "error": "Der Server hat keine Admin-PIN. Bitte ./install.sh ausführen.",
                 },
                 status=503,
             )
             return False
 
-        supplied = self.headers.get("X-API-Token", "").strip()
+        supplied = self.headers.get("X-Admin-Pin", "").strip()
         if not hmac.compare_digest(supplied, expected):
-            self._send_json({"ok": False, "error": "Nicht autorisiert."}, status=401)
+            self._send_json({"ok": False, "error": "PIN ist nicht korrekt."}, status=401)
             return False
         return True
 

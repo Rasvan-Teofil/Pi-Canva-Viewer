@@ -11,16 +11,16 @@
     <div class="header-left">
       <div class="logo-badge">ICF</div>
       <div>
-        <h1>Pi Screen &amp; TV Control Center</h1>
-        <p id="header-subtitle">ICF Heilbronn · Digital Signage, Church Dashboard, Notion Views &amp; HDMI-CEC · Zur TV-Ansicht: Ctrl+Alt+S</p>
+        <h1>Bildschirm einrichten</h1>
+        <p id="header-subtitle">Canva oder Notion einstellen · Zur TV-Ansicht: Ctrl+Alt+S</p>
       </div>
     </div>
     <div class="header-actions">
-      <label class="admin-token-field">
-        <span>Admin-Schlüssel</span>
-        <input id="admin-token" type="password" autocomplete="current-password" placeholder="Schlüssel aus install.sh" />
+      <label class="admin-pin-field">
+        <span>PIN</span>
+        <input id="admin-pin" type="password" inputmode="numeric" maxlength="12" autocomplete="current-password" placeholder="1234" />
       </label>
-      <button id="btn-save-admin-token" class="btn btn-secondary">🔐 Verbinden</button>
+      <button id="btn-save-admin-pin" class="btn btn-secondary">🔓 Entsperren</button>
       <a href="/display" target="_blank" class="btn btn-secondary">🖥️ TV-Ansicht öffnen (/display)</a>
       <button id="btn-reload-display" class="btn btn-primary">🔄 Display neu laden</button>
     </div>
@@ -28,7 +28,45 @@
 
   <div id="toast" class="toast hidden"></div>
 
-  <main class="admin-container">
+  <main class="simple-admin">
+    <section class="simple-intro">
+      <span class="badge-tag">DIESER BILDSCHIRM</span>
+      <h2>Was soll auf dem Bildschirm laufen?</h2>
+      <p>Link einfügen, speichern, anzeigen. Beide Seiten bleiben im Hintergrund vorgeladen.</p>
+      <div id="quick-current-mode" class="quick-mode">Aktive Ansicht: –</div>
+    </section>
+
+    <section class="quick-card canva-quick-card">
+      <div class="quick-card-icon">🎞️</div>
+      <div class="quick-card-main">
+        <h2>Canva-Präsentation</h2>
+        <p>Füge den Canva-Design- oder Präsentationslink ein.</p>
+        <input id="quick-canva-url" type="url" placeholder="https://www.canva.com/design/..." />
+        <label class="toggle-label"><input type="checkbox" id="quick-canva-autoplay" checked /> Diashow automatisch starten</label>
+        <div class="btn-row">
+          <button id="btn-quick-save-canva" class="btn btn-secondary">Speichern</button>
+          <button id="btn-quick-show-canva" class="btn btn-primary">Auf Bildschirm anzeigen</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="quick-card notion-quick-card">
+      <div class="quick-card-icon">🗂️</div>
+      <div class="quick-card-main">
+        <h2>Notion-Seite</h2>
+        <p>Füge den veröffentlichten Notion-Link oder Embed-Code ein.</p>
+        <textarea id="quick-notion-url" rows="3" placeholder="https://...notion.site/... oder &lt;iframe&gt;..."></textarea>
+        <div class="btn-row">
+          <button id="btn-quick-save-notion" class="btn btn-secondary">Speichern</button>
+          <button id="btn-quick-show-notion" class="btn btn-primary">Auf Bildschirm anzeigen</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <details class="advanced-settings">
+    <summary>Weitere Einstellungen: TV-Zeitplan, Dashboard und Inhalte</summary>
+    <main class="admin-container">
     <!-- 1. ANZEIGE-MODUS & ROTATION -->
     <section class="card full-width">
       <div class="card-header">
@@ -316,7 +354,8 @@
         </section>
       </div>
     </div>
-  </main>
+    </main>
+  </details>
 
   <script src="/static/js/admin.js"></script>
 </body>

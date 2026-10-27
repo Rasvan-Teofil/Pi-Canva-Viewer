@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # One-time, repeatable installer for Ubuntu on Raspberry Pi.
-# Run: sudo bash ./install.sh [--install-desktop] [--user USER] [--admin-token TOKEN]
+# Run: sudo bash ./install.sh [--install-desktop] [--user USER] [--admin-pin PIN]
 
 set -Eeuo pipefail
 
 INSTALL_DESKTOP=0
 TARGET_USER="${SUDO_USER:-}"
-ADMIN_TOKEN=""
+ADMIN_PIN=""
 
 usage() {
     cat <<'EOF'
@@ -15,7 +15,7 @@ Usage: sudo bash ./install.sh [options]
 Options:
   --install-desktop      Install Ubuntu Desktop Minimal when this is Ubuntu Server.
   --user USER            Desktop user that will run the kiosk (default: invoking sudo user).
-  --admin-token TOKEN    Reuse this token instead of generating a new one.
+  --admin-pin PIN        Set a numeric admin PIN (default: 1234).
   --help                 Show this help.
 EOF
 }
@@ -27,8 +27,8 @@ while [[ $# -gt 0 ]]; do
             TARGET_USER="${2:?--user needs a value}"
             shift
             ;;
-        --admin-token)
-            ADMIN_TOKEN="${2:?--admin-token needs a value}"
+        --admin-pin)
+            ADMIN_PIN="${2:?--admin-pin needs a value}"
             shift
             ;;
         --help)
@@ -108,18 +108,22 @@ done
 
 mkdir -p /etc/pi-screen
 RUNTIME_ENV=/etc/pi-screen/runtime.env
-if [[ -z "$ADMIN_TOKEN" && -f "$RUNTIME_ENV" ]]; then
-    ADMIN_TOKEN="$(sed -n 's/^PI_SCREEN_ADMIN_TOKEN=//p' "$RUNTIME_ENV" | head -n 1)"
+if [[ -z "$ADMIN_PIN" && -f "$RUNTIME_ENV" ]]; then
+    ADMIN_PIN="$(sed -n 's/^PI_SCREEN_ADMIN_PIN=//p' "$RUNTIME_ENV" | head -n 1)"
 fi
-if [[ -z "$ADMIN_TOKEN" ]]; then
-    ADMIN_TOKEN="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
+if [[ -z "$ADMIN_PIN" ]]; then
+    ADMIN_PIN="1234"
+fi
+if [[ ! "$ADMIN_PIN" =~ ^[0-9]{4,12}$ ]]; then
+    echo "Admin PIN must contain 4 to 12 digits." >&2
+    exit 2
 fi
 
 umask 077
 cat >"${RUNTIME_ENV}.tmp" <<EOF
 KIOSK_HOST=0.0.0.0
 KIOSK_PORT=8080
-PI_SCREEN_ADMIN_TOKEN=${ADMIN_TOKEN}
+PI_SCREEN_ADMIN_PIN=${ADMIN_PIN}
 EOF
 install -o root -g "$TARGET_GROUP" -m 0640 "${RUNTIME_ENV}.tmp" "$RUNTIME_ENV"
 rm -f "${RUNTIME_ENV}.tmp"
@@ -188,9 +192,9 @@ Installation complete.
 
   Display:  http://127.0.0.1:8080/display
   Admin:    http://<PI-IP>:8080/admin
-  Token:    ${ADMIN_TOKEN}
+  Admin-PIN: ${ADMIN_PIN}
 
 After the next reboot, Ubuntu logs in as ${TARGET_USER}, starts the kiosk
-automatically, and keeps the server running via systemd. Save the token in a
-password manager; it is also stored root-readable in ${RUNTIME_ENV}.
+automatically, and keeps the server running via systemd. The default PIN is
+1234; you can set another PIN with --admin-pin. It is stored in ${RUNTIME_ENV}.
 EOF

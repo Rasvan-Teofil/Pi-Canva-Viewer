@@ -1,6 +1,6 @@
 (() => {
   let currentState = null;
-  const ADMIN_TOKEN_KEY = "pi-screen-admin-token";
+  const ADMIN_PIN_KEY = "pi-screen-admin-pin";
 
   const STATUS_LABELS = {
     todo: "⏳ Offen",
@@ -57,13 +57,13 @@
     }
   }
 
-  function getAdminToken() {
-    return sessionStorage.getItem(ADMIN_TOKEN_KEY) || "";
+  function getAdminPin() {
+    return sessionStorage.getItem(ADMIN_PIN_KEY) || "";
   }
 
   function authHeaders(extra = {}) {
-    const token = getAdminToken();
-    return token ? { ...extra, "X-API-Token": token } : extra;
+    const pin = getAdminPin();
+    return pin ? { ...extra, "X-Admin-Pin": pin } : extra;
   }
 
   async function apiPost(url, payload) {
@@ -93,6 +93,10 @@
   function populateUI(state) {
     currentState = state;
     const mode = (state.display && state.display.mode) || "dashboard";
+    const quickMode = document.getElementById("quick-current-mode");
+    if (quickMode) {
+      quickMode.textContent = `Aktive Ansicht: ${{canva: "Canva", notion: "Notion"}[mode] || mode}`;
+    }
 
     document.querySelectorAll(".mode-card").forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.mode === mode);
@@ -147,6 +151,9 @@
     document.getElementById("canva-title").value = canva.title || "";
     document.getElementById("canva-url").value = canva.url || "";
     document.getElementById("canva-autoplay-on-load").checked = Boolean(canva.use_xdotool_autoplay);
+    document.getElementById("quick-canva-url").value = canva.url || "";
+    document.getElementById("quick-canva-autoplay").checked = Boolean(canva.use_xdotool_autoplay);
+    document.getElementById("quick-notion-url").value = nv.url || "";
 
     // Tasks list
     renderTasks(state.tasks || []);
@@ -380,20 +387,20 @@
     loadInitialState();
   });
 
-  document.getElementById("btn-save-admin-token").addEventListener("click", async () => {
-    const token = document.getElementById("admin-token").value.trim();
-    if (!token) {
-      sessionStorage.removeItem(ADMIN_TOKEN_KEY);
-      showToast("Admin-Schlüssel eingeben.");
+  document.getElementById("btn-save-admin-pin").addEventListener("click", async () => {
+    const pin = document.getElementById("admin-pin").value.trim();
+    if (!pin) {
+      sessionStorage.removeItem(ADMIN_PIN_KEY);
+      showToast("Bitte die PIN eingeben.");
       return;
     }
-    sessionStorage.setItem(ADMIN_TOKEN_KEY, token);
+    sessionStorage.setItem(ADMIN_PIN_KEY, pin);
     const result = await apiGet("/api/admin/verify");
     if (result.ok) {
-      showToast("Admin-Schlüssel akzeptiert.");
+      showToast("PIN akzeptiert.");
     } else {
-      sessionStorage.removeItem(ADMIN_TOKEN_KEY);
-      showToast(result.error || "Admin-Schlüssel wurde nicht akzeptiert.");
+      sessionStorage.removeItem(ADMIN_PIN_KEY);
+      showToast(result.error || "PIN wurde nicht akzeptiert.");
     }
   });
 
@@ -456,6 +463,54 @@
     showToast(res.message || res.error || "xdotool Befehl ausgeführt");
   });
 
+  async function saveQuickCanva(showOnDisplay) {
+    const url = document.getElementById("quick-canva-url").value.trim();
+    if (!url) {
+      showToast("Bitte einen Canva-Link einfügen.");
+      return;
+    }
+    const currentCanva = (currentState && currentState.canva) || {};
+    const res = await apiPost("/api/canva", {
+      title: currentCanva.title || "Canva Präsentation",
+      url,
+      use_xdotool_autoplay: document.getElementById("quick-canva-autoplay").checked,
+    });
+    if (!res.ok) {
+      showToast(res.error || "Canva-Link konnte nicht gespeichert werden.");
+      return;
+    }
+    if (showOnDisplay) {
+      const modeResult = await apiPost("/api/display/mode", { mode: "canva" });
+      showToast(modeResult.ok ? "Canva gespeichert und auf dem Bildschirm angezeigt." : (modeResult.error || "Canva gespeichert."));
+    } else {
+      showToast("Canva-Link gespeichert.");
+    }
+    loadInitialState();
+  }
+
+  async function saveQuickNotion(showOnDisplay) {
+    const url = document.getElementById("quick-notion-url").value.trim();
+    if (!url) {
+      showToast("Bitte einen veröffentlichten Notion-Link einfügen.");
+      return;
+    }
+    const currentNotion = (currentState && currentState.notion_view) || {};
+    const res = await apiPost("/api/notion/view", {
+      action: "update",
+      title: currentNotion.title || "Notion Seite",
+      subdomain: currentNotion.subdomain || "icfhn",
+      url,
+      switch_mode: showOnDisplay,
+    });
+    showToast(res.ok ? (showOnDisplay ? "Notion gespeichert und auf dem Bildschirm angezeigt." : "Notion-Link gespeichert.") : (res.error || "Notion-Link konnte nicht gespeichert werden."));
+    if (res.ok) loadInitialState();
+  }
+
+  document.getElementById("btn-quick-save-canva").addEventListener("click", () => saveQuickCanva(false));
+  document.getElementById("btn-quick-show-canva").addEventListener("click", () => saveQuickCanva(true));
+  document.getElementById("btn-quick-save-notion").addEventListener("click", () => saveQuickNotion(false));
+  document.getElementById("btn-quick-show-notion").addEventListener("click", () => saveQuickNotion(true));
+
   window.addEventListener("keydown", (event) => {
     if (event.ctrlKey && event.altKey && event.key.toLowerCase() === "s") {
       event.preventDefault();
@@ -463,6 +518,6 @@
     }
   });
 
-  document.getElementById("admin-token").value = getAdminToken();
+  document.getElementById("admin-pin").value = getAdminPin();
   loadInitialState();
 })();

@@ -79,7 +79,7 @@ body {
   gap: 12px;
 }
 
-.admin-token-field {
+.admin-pin-field {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -87,10 +87,126 @@ body {
   font-size: 0.78rem;
 }
 
-.admin-token-field input {
-  width: 190px;
+.admin-pin-field input {
+  width: 96px;
   padding: 8px 10px;
   font-size: 0.82rem;
+}
+
+/* Simple day-to-day configuration surface */
+.simple-admin {
+  width: min(920px, calc(100% - 32px));
+  margin: 34px auto;
+  display: grid;
+  gap: 18px;
+}
+
+.simple-intro,
+.quick-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+.simple-intro {
+  padding: 26px;
+}
+
+.simple-intro h2 {
+  margin-top: 5px;
+  font-size: 1.5rem;
+}
+
+.simple-intro p,
+.quick-card p {
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.quick-mode {
+  display: inline-flex;
+  margin-top: 16px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+
+.quick-card {
+  display: flex;
+  gap: 18px;
+  padding: 24px;
+}
+
+.quick-card-icon {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(245, 158, 11, 0.16);
+  font-size: 1.7rem;
+}
+
+.notion-quick-card .quick-card-icon {
+  background: rgba(56, 189, 248, 0.16);
+}
+
+.quick-card-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.quick-card h2 {
+  font-size: 1.2rem;
+}
+
+.quick-card input,
+.quick-card textarea {
+  width: 100%;
+  margin: 16px 0 12px;
+}
+
+.quick-card textarea {
+  resize: vertical;
+}
+
+.advanced-settings {
+  width: min(1384px, calc(100% - 32px));
+  margin: 0 auto 34px;
+  color: var(--text-muted);
+}
+
+.advanced-settings > summary {
+  cursor: pointer;
+  padding: 12px 4px;
+  font-weight: 700;
+}
+
+.advanced-settings .admin-container {
+  margin-top: 0;
+}
+
+@media (max-width: 720px) {
+  .admin-header {
+    padding: 14px 16px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .quick-card {
+    padding: 18px;
+  }
 }
 
 .schedule-days {

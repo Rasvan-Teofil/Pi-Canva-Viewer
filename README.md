@@ -10,7 +10,7 @@ Der unterstützte Weg ist absichtlich auf einen einzigen Installationsschritt re
 sudo bash ./install.sh
 ```
 
-Das Skript ist wiederholbar und erledigt Folgendes: installiert die benötigten Ubuntu-Pakete, richtet den Webserver als systemd-Dienst ein, erzeugt einen Admin-Schlüssel, aktiviert den grafischen Autostart und startet Chromium nach jedem Boot im Kioskmodus neu. Der Kiosk startet auch wieder, falls Chromium abstürzt.
+Das Skript ist wiederholbar und erledigt Folgendes: installiert die benötigten Ubuntu-Pakete, richtet den Webserver als systemd-Dienst ein, setzt die einfache Admin-PIN `1234`, aktiviert den grafischen Autostart und startet Chromium nach jedem Boot im Kioskmodus neu. Der Kiosk startet auch wieder, falls Chromium abstürzt.
 
 Beim Upgrade des ursprünglichen Prototyps beendet das Skript außerdem dessen alte `pi_kiosk_server.service`- und `start_canva.service`-Instanzen, damit nicht zwei Server oder Browser um Port und Bildschirm konkurrieren.
 
@@ -20,17 +20,17 @@ Voraussetzung ist **Ubuntu Desktop für Raspberry Pi** (22.04 oder neuer) mit ei
 sudo bash ./install.sh --install-desktop
 ```
 
-Nach der Installation einmal neu starten. Danach erscheint die Anzeige selbstständig am HDMI-Bildschirm. Die Ausgabe des Installers enthält den einmalig erzeugten Admin-Schlüssel.
+Nach der Installation einmal neu starten. Danach erscheint die Anzeige selbstständig am HDMI-Bildschirm. Die Standard-PIN für die Administration ist `1234`.
 
 - TV-Ansicht auf dem Pi: `http://127.0.0.1:8080/display`
 - Administration im lokalen Netz: `http://<PI-IP>:8080/admin` – hier werden Canva-Link, Notion-Ansicht, Anzeige-Modus und TV-Zeitplan dieses Pi gesetzt.
-- Admin-Schlüssel: in der Kopfzeile der Administration einfügen; er wird nur für die laufende Browser-Sitzung gespeichert.
+- Admin-PIN: `1234` in der Kopfzeile der Administration eingeben; sie wird nur für die laufende Browser-Sitzung gespeichert. Optional lässt sie sich bei der Installation mit `--admin-pin 1234` setzen.
 
-Der Schlüssel liegt auf dem Pi mit restriktiven Rechten in `/etc/pi-screen/runtime.env`. Bei einer Aktualisierung des ausgecheckten Branches genügt danach erneut `sudo bash ./install.sh`; der Schlüssel bleibt erhalten und der Dienst wird neu gestartet.
+Die PIN liegt auf dem Pi in `/etc/pi-screen/runtime.env`. Bei einer Aktualisierung des ausgecheckten Branches genügt danach erneut `sudo bash ./install.sh`; eine bereits gesetzte PIN bleibt erhalten und der Dienst wird neu gestartet.
 
 ### Sicherheit und CEC-Hinweis
 
-Alle schreibenden Steuerbefehle (Modus, Canva-Link, Zeitplan, TV-Power usw.) verlangen den Admin-Schlüssel. Der reine TV-Display-Endpunkt darf ohne Schlüssel gelesen werden, enthält aber keine Notion-Zugangsdaten. CORS für fremde Webseiten ist deaktiviert.
+Alle schreibenden Steuerbefehle (Modus, Canva-Link, Zeitplan, TV-Power usw.) verlangen die Admin-PIN. Der reine TV-Display-Endpunkt darf ohne PIN gelesen werden, enthält aber keine Notion-Zugangsdaten. CORS für fremde Webseiten ist deaktiviert.
 
 HDMI-CEC kann einen kompatiblen Fernseher in den Standby schicken und wieder wecken. Es schaltet **nicht garantiert die Netzspannung** ab. CEC muss am Fernseher aktiviert sein (bei Samsung: Anynet+); der mitgelieferte Status meldet einen Fehler, statt wie der alte Prototyp einen simulierten Erfolg anzuzeigen. Für professionelle Displays ohne verlässliches CEC wäre später RS-232, IP-Control oder ein geprüfter Stromschalter nötig.
 
