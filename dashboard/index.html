@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>ICF Screen</title>
+    <link rel="stylesheet" href="./dashboard.css" />
+  </head>
+  <body>
+    <div class="background" aria-hidden="true"></div>
+    <main class="dashboard" aria-label="ICF Dashboard">
+      <header class="topbar">
+        <div class="brand" aria-label="ICF Heilbronn">
+          <div class="brand-mark" id="logo-text">ICF</div>
+          <div>
+            <p class="eyebrow">WELCOME HOME</p>
+            <h1 id="church-name">ICF Heilbronn</h1>
+          </div>
+        </div>
+        <div class="clock" aria-live="polite">
+          <time id="clock-time">--:--</time>
+          <span id="clock-date">--</span>
+        </div>
+      </header>
+
+      <section class="content-grid">
+        <article class="panel events-panel">
+          <div class="panel-heading">
+            <span class="panel-icon" aria-hidden="true">▦</span>
+            <h2 id="calendar-title">Demnächst in der Church</h2>
+          </div>
+          <div id="calendar-events" class="events" aria-live="polite"></div>
+          <iframe
+            id="calendar-embed"
+            class="calendar-embed hidden"
+            title="Church-Kalender"
+            loading="lazy"
+            referrerpolicy="strict-origin-when-cross-origin"
+          ></iframe>
+        </article>
+
+        <article class="panel verse-panel">
+          <div class="panel-heading">
+            <span class="panel-icon" aria-hidden="true">✦</span>
+            <h2 id="verse-label">Vers des Tages</h2>
+          </div>
+          <blockquote id="verse-text">Der HERR ist mein Hirte, mir wird nichts mangeln.</blockquote>
+          <p id="verse-reference" class="verse-reference">Psalm 23,1</p>
+        </article>
+
+        <article class="panel weather-panel">
+          <div class="panel-heading">
+            <span class="panel-icon" aria-hidden="true">☀</span>
+            <h2>Wetter</h2>
+          </div>
+          <div class="weather-content">
+            <div id="weather-icon" class="weather-icon" aria-hidden="true">◌</div>
+            <div>
+              <p id="weather-temperature" class="weather-temperature">--°</p>
+              <p id="weather-summary" class="weather-summary">Wetter wird geladen …</p>
+              <p id="weather-location" class="weather-location">Heilbronn</p>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <footer class="footer">
+        <span>Schön, dass du da bist.</span>
+        <span class="footer-dot" aria-hidden="true">•</span>
+        <span id="footer-location">ICF Heilbronn</span>
+      </footer>
+    </main>
+    <script src="./dashboard-config.js"></script>
+    <!-- Created locally by the bootstrap script; intentionally not tracked in Git. -->
+    <script src="./runtime-config.js"></script>
+    <script src="./dashboard.js"></script>
+  </body>
+</html>

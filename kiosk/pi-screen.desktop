@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Pi Screen Kiosk
+Comment=Start the dedicated Canva/dashboard screen after desktop login
+Exec=/opt/pi-screen/kiosk/start-kiosk.sh
+Terminal=false
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=2

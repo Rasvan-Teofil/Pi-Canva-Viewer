@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Pi Screen X11
+Comment=Minimal X11 session for the Pi-Screen kiosk
+Exec=openbox-session
+TryExec=openbox-session
+DesktopNames=PiScreen
