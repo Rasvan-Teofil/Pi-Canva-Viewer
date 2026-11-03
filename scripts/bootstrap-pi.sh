@@ -26,7 +26,7 @@ Usage: sudo bash bootstrap-pi.sh [Optionen]
 
   --canva-url URL     Canva-Link (Präsentation/View-Link)
   --user NAME         Kiosk-User (Default: canva)
-  --admin-pin PIN     4-12 Ziffern (Default: zufällig, wird am Ende angezeigt)
+  --admin-pin PIN     4-stelliger PIN (erst V2 aktiv; Default: zufällig)
   --mode MODE         canva | public (Default: canva)
   --branch NAME       Git-Branch (Default: feat/requirements-v2)
   --no-upgrade        apt full-upgrade überspringen
@@ -116,8 +116,8 @@ if [[ -f "$CONF" ]]; then
     [[ -z "$CANVA_URL" ]] && CANVA_URL="$(sed -n 's/^CANVA_URL=//p' "$CONF" | tr -d '"')"
     [[ -z "$ADMIN_PIN" ]] && ADMIN_PIN="$(sed -n 's/^ADMIN_PIN=//p' "$CONF" | tr -d '"')"
 fi
-[[ -z "$ADMIN_PIN" ]] && ADMIN_PIN="$(shuf -i 100000-999999 -n 1)"
-[[ "$ADMIN_PIN" =~ ^[0-9]{4,12}$ ]] || die "Admin-PIN: 4-12 Ziffern."
+[[ -z "$ADMIN_PIN" ]] && ADMIN_PIN="$(shuf -i 1000-9999 -n 1)"
+[[ "$ADMIN_PIN" =~ ^[0-9]{4}$ ]] || die "Admin-PIN: genau 4 Ziffern."
 if [[ -z "$CANVA_URL" ]]; then
     echo "Hinweis: kein --canva-url gesetzt. Später in $CONF eintragen." >&2
 fi
@@ -125,6 +125,7 @@ cat > "$CONF" <<CFG
 # Pi-Screen Konfiguration – nach Änderung: sudo systemctl restart lightdm
 MODE="${MODE}"
 CANVA_URL="${CANVA_URL}"
+# V1: Dashboard öffentlich, kein PIN. V2: PIN per Tastatur beim Start des Dashboard-Fensters.
 ADMIN_PIN="${ADMIN_PIN}"
 # Emulierte Klicks für Canva-Autoplay (x,y;x,y;...). Leer = aus.
 CANVA_AUTOPLAY_CLICKS="1820,1050;1559,872;0,0"
@@ -165,7 +166,7 @@ Fertig.
   Modus:      ${MODE}
   Canva-URL:  ${CANVA_URL:-<nicht gesetzt>}
   Config:     ${CONF}
-  Admin-PIN:  ${ADMIN_PIN}
+  Admin-PIN:  ${ADMIN_PIN} (vorbereitet, aktiv ab V2)
 
 Nächste Schritte:
   1. sudo reboot

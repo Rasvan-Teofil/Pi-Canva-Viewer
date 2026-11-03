@@ -19,7 +19,8 @@ Stand: 03.11.2026 · Branch `feat/requirements-v2`
    - Wetter
    - Hintergrundbild
    - ICF-Logo
-6. **Absicherung** – Zugriff auf Admin/Config nur per Code, kein offener Zugriff.
+   - Öffentlich, ohne PIN (V1)
+6. **Dashboard öffentlich** – in V1 ohne PIN, kein Admin-Zugriff am Screen.
 7. **Public-Modus** – eigene Variante: nur Slideshow, kein Dashboard.
 8. **HDMI-CEC** – TV-Steuerung für Samsung 65 Zoll (an/aus, Quelle).
 9. **Sauberer Neustart** – keine alten Skripte, Services oder Hintergrundprozesse übernehmen.
@@ -41,7 +42,7 @@ curl -fsSL https://raw.githubusercontent.com/Rasvan-Teofil/Pi-Canva-Viewer/feat/
 2. Altlasten entfernen (alte Services, Autostarts, Prozesse)
 3. Kiosk-User `canva` anlegen (kein Passwort, nur Autologin)
 4. Repo nach `/opt/pi-screen` klonen bzw. aktualisieren
-5. Config `/etc/pi-screen/config.env` (Canva-URL, Modus, Admin-PIN, Klick-Koordinaten)
+5. Config `/etc/pi-screen/config.env` (Canva-URL, Modus, Klick-Koordinaten, 4-stelliger PIN für V2)
 6. X11 + LightDM-Autologin für `canva`, Bildschirmschoner aus
 7. Autostart: `~canva/.config/autostart/pi-screen.desktop` → `kiosk/start-kiosk.sh`
 
@@ -54,6 +55,10 @@ curl -fsSL https://raw.githubusercontent.com/Rasvan-Teofil/Pi-Canva-Viewer/feat/
 **Optionen:** `--user`, `--admin-pin`, `--mode canva|public`, `--branch`, `--no-upgrade`, `--reboot`
 
 ## V2 / V3 – Später
+- **PIN-Absicherung (V2)**
+  - 4-stelliger PIN beim Start des Dashboard-Fensters
+  - Eingabe nur per Tastatur, keine Maus nötig
+  - PIN konfigurierbar in `/etc/pi-screen/config.env` (`ADMIN_PIN`), Install-Skript setzt ihn bereits (`--admin-pin`)
 - Notion-Anbindung (Datenbank-Ansichten, Volunteer-Aufgaben)
 - Tiefe Integrationen (Multi-Pi-Fleet, Remote-Steuerung)
 
