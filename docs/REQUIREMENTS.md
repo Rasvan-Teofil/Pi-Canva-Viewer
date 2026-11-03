@@ -1,6 +1,6 @@
 # Pi-Screen – Requirements (V1, Neustart)
 
-Stand: 03.11.2026 · Branch `feat/requirements-v2`
+Stand: 03.11.2026 · Branch `main`
 
 ## V1 – Muss
 1. **Frischer Pi** – sauberes Raspberry Pi OS, Setup von null.
@@ -25,7 +25,8 @@ Stand: 03.11.2026 · Branch `feat/requirements-v2`
 8. **HDMI-CEC** – TV-Steuerung für Samsung 65 Zoll (an/aus, Quelle).
 9. **Sauberer Neustart** – keine alten Skripte, Services oder Hintergrundprozesse übernehmen.
 
-## Installation (frischer Pi → Standalone)
+## Installation (frischer Pi → Standalone) – Soll-Ablauf
+> Skript `scripts/bootstrap-pi.sh` wird von null neu gebaut. Ablauf unten ist die Vorgabe.
 **Vorher**
 - Raspberry Pi Imager → *Raspberry Pi OS (64-bit) with desktop*
 - Im Imager: Hostname, Admin-User, WLAN, SSH setzen
@@ -33,11 +34,11 @@ Stand: 03.11.2026 · Branch `feat/requirements-v2`
 
 **Ein Befehl**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Rasvan-Teofil/Pi-Canva-Viewer/feat/requirements-v2/scripts/bootstrap-pi.sh \
+curl -fsSL https://raw.githubusercontent.com/Rasvan-Teofil/Pi-Canva-Viewer/main/scripts/bootstrap-pi.sh \
   | sudo bash -s -- --canva-url "https://www.canva.com/design/<ID>/view" --reboot
 ```
 
-**Was das Skript macht** (`scripts/bootstrap-pi.sh`, wiederholbar)
+**Was das Skript machen soll** (wiederholbar)
 1. OS-Update + Pakete (Chromium, xdotool, unclutter, cec-utils, git)
 2. Altlasten entfernen (alte Services, Autostarts, Prozesse)
 3. Kiosk-User `canva` anlegen (kein Passwort, nur Autologin)
