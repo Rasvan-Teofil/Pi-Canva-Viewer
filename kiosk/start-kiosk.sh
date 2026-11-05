@@ -24,8 +24,13 @@ log() {
 
 find_browser() {
   local candidate
-  for candidate in chromium-browser chromium; do
-    if command -v "$candidate" >/dev/null 2>&1; then
+  for candidate in chromium-browser chromium /snap/bin/chromium; do
+    if [[ "$candidate" == /* ]]; then
+      if [[ -x "$candidate" ]]; then
+        printf '%s\n' "$candidate"
+        return 0
+      fi
+    elif command -v "$candidate" >/dev/null 2>&1; then
       command -v "$candidate"
       return 0
     fi

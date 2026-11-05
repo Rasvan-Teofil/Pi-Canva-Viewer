@@ -2,6 +2,6 @@
 Type=Application
 Name=Pi Screen X11
 Comment=Minimal X11 session for the Pi-Screen kiosk
-Exec=openbox-session
-TryExec=openbox-session
+Exec=/opt/pi-screen/kiosk/x11-session.sh
+TryExec=/opt/pi-screen/kiosk/x11-session.sh
 DesktopNames=PiScreen

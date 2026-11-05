@@ -26,7 +26,6 @@ Stand: 03.11.2026 · Branch `main`
 9. **Sauberer Neustart** – keine alten Skripte, Services oder Hintergrundprozesse übernehmen.
 
 ## Installation (frischer Pi → Standalone) – Soll-Ablauf
-> Skript `scripts/bootstrap-pi.sh` wird von null neu gebaut. Ablauf unten ist die Vorgabe.
 **Vorher**
 - Raspberry Pi Imager → *Raspberry Pi OS (64-bit) with desktop*
 - Im Imager: Hostname, Admin-User, WLAN, SSH setzen
@@ -38,7 +37,7 @@ curl -fsSL https://raw.githubusercontent.com/Rasvan-Teofil/Pi-Canva-Viewer/main/
   | sudo bash -s -- --canva-url "https://www.canva.com/design/<ID>/view" --reboot
 ```
 
-**Was das Skript machen soll** (wiederholbar)
+**Was das Skript macht** (wiederholbar)
 1. OS-Update + Pakete (Chromium, xdotool, unclutter, cec-utils, git)
 2. Altlasten entfernen (alte Services, Autostarts, Prozesse)
 3. Kiosk-User `canva` anlegen (kein Passwort, nur Autologin)

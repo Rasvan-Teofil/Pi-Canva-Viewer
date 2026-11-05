@@ -94,3 +94,20 @@ curl -fsSL https://raw.githubusercontent.com/Rasvan-Teofil/Pi-Canva-Viewer/main/
 ```
 
 Ohne `--reboot` startet das Skript die grafische Sitzung am Ende neu, damit der aktualisierte Kiosk sofort aktiv wird.
+
+## Troubleshooting
+
+Wenn nach dem Reboot nur ein leerer schwarzer/grauer Desktop erscheint und kein Chromium:
+
+```bash
+# Logs des Kiosk-Starts
+journalctl -t pi-screen-kiosk -n 50 --no-pager
+# Session / Autostart prüfen
+sudo -u canva cat /home/canva/.config/openbox/autostart
+ls -l /opt/pi-screen/kiosk/start-kiosk.sh
+# Bootstrap erneut (Config bleibt erhalten)
+curl -fsSL https://raw.githubusercontent.com/Rasvan-Teofil/Pi-Canva-Viewer/main/scripts/bootstrap-pi.sh \
+  | sudo bash -s -- --reboot
+```
+
+Openbox startet **keine** `~/.config/autostart/*.desktop`-Dateien. Der Kiosk läuft über `~/.config/openbox/autostart` bzw. `kiosk/x11-session.sh`.

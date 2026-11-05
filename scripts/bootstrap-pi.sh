@@ -262,6 +262,16 @@ configure_x11_autologin() {
   # Raspberry Pi OS Desktop may default to Wayland. The calibrated Canva
   # controls use xdotool, so install and select our explicit X11 session
   # instead of depending on whichever desktop session happens to be default.
+  # Prefer X11 over Wayland: Canva click automation needs xdotool.
+  if command -v raspi-config >/dev/null 2>&1; then
+    raspi-config nonint do_wayland W1 || true
+  fi
+
+  [[ -f "$INSTALL_DIR/kiosk/x11-session.sh" ]] || die "Missing kiosk/x11-session.sh in the installed branch"
+  chmod 0755 "$INSTALL_DIR/kiosk/x11-session.sh"
+  chmod 0755 "$INSTALL_DIR/kiosk/start-kiosk.sh"
+  chmod 0755 "$INSTALL_DIR/scripts/cec-control.sh"
+
   install -d -m 0755 /usr/share/xsessions
   install -m 0644 \
     "$INSTALL_DIR/kiosk/pi-screen-x11.desktop" \
@@ -276,12 +286,22 @@ configure_x11_autologin() {
     echo "autologin-session=pi-screen-x11"
   } >/etc/lightdm/lightdm.conf.d/90-pi-screen.conf
 
-  install -d -o "$KIOSK_USER" -g "$KIOSK_GROUP" -m 0755 "/home/$KIOSK_USER/.config/autostart"
+  # Openbox ignores ~/.config/autostart/*.desktop. Keep a copy there for
+  # debugging, but the real start path is ~/.config/openbox/autostart via
+  # kiosk/x11-session.sh.
+  install -d -o "$KIOSK_USER" -g "$KIOSK_GROUP" -m 0755 \
+    "/home/$KIOSK_USER/.config/autostart" \
+    "/home/$KIOSK_USER/.config/openbox"
   install -o "$KIOSK_USER" -g "$KIOSK_GROUP" -m 0644 \
     "$INSTALL_DIR/kiosk/pi-screen.desktop" \
     "/home/$KIOSK_USER/.config/autostart/pi-screen.desktop"
-  chmod 0755 "$INSTALL_DIR/kiosk/start-kiosk.sh"
-  chmod 0755 "$INSTALL_DIR/scripts/cec-control.sh"
+  {
+    echo "# Managed by scripts/bootstrap-pi.sh"
+    echo "xset s off -dpms s noblank >/dev/null 2>&1 || true"
+    echo "/opt/pi-screen/kiosk/start-kiosk.sh &"
+  } >"/home/$KIOSK_USER/.config/openbox/autostart"
+  chown "$KIOSK_USER:$KIOSK_GROUP" "/home/$KIOSK_USER/.config/openbox/autostart"
+  chmod 0755 "/home/$KIOSK_USER/.config/openbox/autostart"
   if [[ -d "$INSTALL_DIR/dashboard" ]]; then
     install -d -o "$KIOSK_USER" -g "$KIOSK_GROUP" -m 0755 "/home/$KIOSK_USER/.local/share/pi-screen"
     ln -sfn "/home/$KIOSK_USER/.local/share/pi-screen/dashboard-config.js" \
