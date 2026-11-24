@@ -9,6 +9,54 @@ V1 enthält bewusst nur drei öffentliche Bildschirmvarianten:
 
 Die bisherigen Dashboard-/Notion-/Fleet-Experimente wurden verworfen und sind unter dem Git-Tag `archive/v0-experimente` gesichert. Die verbindliche Spezifikation steht in [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md).
 
+## Stufe 1: Board (aktueller Weg)
+
+Fullscreen-Board mit Bibelvers, ICF-Logo und Uhrzeit. Läuft als der bereits eingeloggte Desktop-User, komplett offline.
+
+**Installieren / aktualisieren** (per SSH als Desktop-User, ohne `sudo` davor):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Rasvan-Teofil/Pi-Canva-Viewer/main/scripts/install-board.sh | bash
+```
+
+Das Skript:
+- installiert fehlende Pakete (git, chromium, unclutter, cec-utils, v4l-utils, cron)
+- klont bzw. aktualisiert das Repo nach `~/pi-screen`
+- legt `~/.config/pi-screen/board.env` und `schedule.env` an (bestehende bleiben)
+- entfernt alte Pi-Screen-Starts (`/etc/lightdm/lightdm.conf.d/90-pi-screen.conf`, canva-Autologin)
+- Autostart: `~/.config/autostart/pi-screen-board.desktop`, bei labwc zusätzlich `~/.config/labwc/autostart`
+- setzt den HDMI-CEC-Zeitplan in die crontab des Users
+- startet das Board sofort auf `DISPLAY=:0`, ohne Reboot
+
+**Inhalt**
+- Vers des Tages aus `board/verses.js` (22 Verse, Wechsel täglich um Mitternacht)
+- ICF-Logo weiß oben mittig, Uhr HH:MM, Datum deutsch (Europe/Berlin)
+- Auslieferung über lokalen Server `http://127.0.0.1:8787/` (`scripts/board-server.py`), Fallback `file://`
+
+**HDMI-CEC-Zeitplan**
+```bash
+nano ~/.config/pi-screen/schedule.env   # TV_ON=08:00, TV_OFF=22:30, TV_DAYS=* | 1-5 | 0,6
+~/pi-screen/scripts/apply-schedule.sh   # übernimmt in die crontab
+```
+
+**TV per SSH**
+```bash
+~/pi-screen/scripts/cec-control.sh on|off|status
+```
+
+**Testbuttons „TV aus“ / „TV an“ (temporär)**
+- unten rechts auf dem Board, nur bei `SHOW_TEST_BUTTONS=true` in `~/.config/pi-screen/board.env`
+- ausschalten: `SHOW_TEST_BUTTONS=false`, danach Board neu laden (`pkill -f pi-screen/board-profile`, startet in 3 s neu)
+- nach „TV aus“ ist der TV im Standby: Einschalten per Zeitplan oder SSH
+
+**Fehlersuche**
+```bash
+journalctl -t pi-screen-board -t pi-screen-cec -n 50 --no-pager
+cat ~/.local/share/pi-screen/board-server.log
+```
+
+Die folgenden Abschnitte beschreiben den älteren Weg mit eigenem `canva`-User (`bootstrap-pi.sh`). Auf dem aktuellen Pi hat er nicht gegriffen.
+
 ## Frischen Pi installieren
 
 Im Raspberry Pi Imager zunächst **Raspberry Pi OS (64-bit) with desktop** wählen und dort Hostname, WLAN, SSH und einen normalen Admin-Benutzer festlegen. Nach dem ersten Boot per SSH verbinden und ausführen:

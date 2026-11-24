@@ -2,6 +2,22 @@
 
 Stand: 03.11.2026 · Branch `main`
 
+## Roadmap (Stand 24.11.2026)
+
+**Stufe 1 – Board (jetzt)**
+- Fullscreen-Board: Bibelvers des Tages, ICF-Logo, Uhrzeit + Datum
+- Offline, keine externen Requests
+- Läuft als eingeloggter Desktop-User, Autostart per XDG/labwc
+- Install per One-Liner: `scripts/install-board.sh`
+- HDMI-CEC-Zeitplan: TV an/aus zu festen Uhrzeiten, optional Wochentage (`~/.config/pi-screen/schedule.env`, crontab)
+- **Temporär:** Testbuttons „TV aus“ / „TV an“ auf dem Board, abschaltbar per `SHOW_TEST_BUTTONS=false`
+
+**Stufe 2 – Canva**
+- Zweites Fenster mit der Canva-Präsentation
+
+**Stufe 3 – Notion (später)**
+- Drittes Fenster: Todo-Datenbank aus Notion
+
 ## V1 – Muss
 1. **Frischer Pi** – sauberes Raspberry Pi OS, Setup von null.
 2. **Self-Install + Autostart von Anfang an** – ein Skript bringt den Pi von null auf Standalone (siehe unten).

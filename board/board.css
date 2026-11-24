@@ -1,0 +1,122 @@
+/* Pi-Screen Board · Stufe 1 · optimiert für 1920×1080, skaliert mit vw/vh */
+@font-face {
+  font-family: "Board Sans";
+  src: url("assets/fonts/RobotoCondensed.ttf") format("truetype");
+  font-weight: 100 900;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  color: #fff;
+  font-family: "Flama Semicondensed", "Board Sans", "Roboto Condensed", "Arial Narrow", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ICF-Logo: oben mittig, Breite 7 % der Formatbreite */
+.logo {
+  position: absolute;
+  top: 6.5vh;
+  left: 50%;
+  width: 7vw;
+  transform: translateX(-50%);
+}
+
+.stage {
+  position: absolute;
+  inset: 20vh 10vw 16vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.clock {
+  font-size: 22vh;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.date {
+  margin-top: 2.2vh;
+  font-size: 3.4vh;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.rule {
+  width: 6vw;
+  height: 0.35vh;
+  margin: 6vh 0 5.5vh;
+  background: #fff;
+}
+
+.verse { max-width: 72vw; }
+
+.verse-text {
+  font-size: 5.4vh;
+  font-weight: 400;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+.verse-text.medium { font-size: 4.8vh; }
+.verse-text.long   { font-size: 4.2vh; }
+
+.verse-ref {
+  margin-top: 3vh;
+  font-size: 2.4vh;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+/* Claim: unten mittig, gleicher Randabstand wie das Logo */
+.claim {
+  position: absolute;
+  bottom: 6.5vh;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 1.8vh;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+}
+
+/* Temporäre Testbuttons (SHOW_TEST_BUTTONS) */
+.test-panel {
+  position: absolute;
+  right: 2vw;
+  bottom: 2.5vh;
+  display: flex;
+  align-items: center;
+  gap: 0.8vw;
+  padding: 0.8vh 0.9vw;
+  border: 1px dashed rgba(255, 255, 255, 0.35);
+  border-radius: 0.6vh;
+  font-size: 1.5vh;
+  cursor: default;
+}
+.test-panel[hidden] { display: none; }
+.test-label { letter-spacing: 0.1em; opacity: 0.6; }
+.test-panel button {
+  font: inherit;
+  color: #fff;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 0.4vh;
+  padding: 0.5vh 0.9vw;
+  cursor: pointer;
+}
+.test-panel button:focus,
+.test-panel button:hover { background: rgba(255, 255, 255, 0.15); outline: none; }
+.test-status { min-width: 0; opacity: 0.7; }

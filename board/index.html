@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pi-Screen Board</title>
+<link rel="stylesheet" href="board.css">
+</head>
+<body>
+  <img class="logo" src="assets/icf-logo-white.png" alt="ICF">
+
+  <main class="stage">
+    <section class="time">
+      <div class="clock" id="clock">--:--</div>
+      <div class="date" id="date"></div>
+    </section>
+
+    <div class="rule" aria-hidden="true"></div>
+
+    <section class="verse">
+      <p class="verse-text" id="verse-text"></p>
+      <p class="verse-ref" id="verse-ref"></p>
+    </section>
+  </main>
+
+  <footer class="claim">KIRCHE ERLEBEN</footer>
+
+  <aside class="test-panel" id="test-panel" hidden>
+    <span class="test-label">TEST · HDMI-CEC</span>
+    <button type="button" data-tv="off">TV aus</button>
+    <button type="button" data-tv="on">TV an</button>
+    <span class="test-status" id="test-status"></span>
+  </aside>
+
+  <!-- board-config.js liefert nur der lokale Board-Server (scripts/board-server.py). -->
+  <script src="board-config.js"></script>
+  <script src="verses.js"></script>
+  <script src="board.js"></script>
+</body>
+</html>
