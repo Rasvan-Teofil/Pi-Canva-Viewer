@@ -1,4 +1,18 @@
 /* Pi-Screen Board · Stufe 1 · optimiert für 1920×1080, skaliert mit vw/vh */
+/* Flama Semicondensed: lizenziert, liegt nur auf dem Pi (~/.config/pi-screen/fonts),
+   ausgeliefert vom Board-Server unter /fonts/. Fehlt sie, greift Roboto Condensed. */
+@font-face {
+  font-family: "Flama Semicondensed";
+  src: url("/fonts/FlamaSemicondensed-Book.otf") format("opentype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Flama Semicondensed";
+  src: url("/fonts/FlamaSemicondensed-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-display: swap;
+}
 @font-face {
   font-family: "Board Sans";
   src: url("assets/fonts/RobotoCondensed.ttf") format("truetype");
@@ -38,7 +52,7 @@ html, body {
 
 .clock {
   font-size: 22vh;
-  font-weight: 300;
+  font-weight: 500;
   line-height: 1;
   letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;

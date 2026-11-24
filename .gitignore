@@ -4,3 +4,8 @@ __pycache__/
 .env
 *.log
 dashboard/runtime-config.js
+
+# Lizenzierte Schriften (Flama) nie committen
+*.otf
+fonts-private/
+board/assets/fonts-private/

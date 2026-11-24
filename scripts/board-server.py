@@ -22,6 +22,9 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 BOARD_DIR = REPO / "board"
 CEC_SCRIPT = REPO / "scripts" / "cec-control.sh"
+FONT_DIR = Path(os.environ.get("PI_SCREEN_FONT_DIR",
+                               Path.home() / ".config" / "pi-screen" / "fonts"))
+FONT_TYPES = {".otf": "font/otf", ".ttf": "font/ttf", ".woff": "font/woff", ".woff2": "font/woff2"}
 CONFIG_FILE = Path(os.environ.get("PI_SCREEN_BOARD_CONFIG",
                                   Path.home() / ".config" / "pi-screen" / "board.env"))
 
@@ -168,6 +171,23 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _font(self, name):
+        """Lizenzierte Schriften aus ~/.config/pi-screen/fonts (nicht im Repo). Nur reine Dateinamen."""
+        ctype = FONT_TYPES.get(os.path.splitext(name)[1].lower())
+        if not ctype or not re.fullmatch(r"[A-Za-z0-9._-]+", name) or name.startswith("."):
+            self._json(404, {"ok": False})
+            return
+        try:
+            data = (FONT_DIR / name).read_bytes()
+        except OSError:
+            self._json(404, {"ok": False})
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
     def do_GET(self):
         path = self.path.split("?", 1)[0]
         if path == "/board-config.js":
@@ -190,6 +210,9 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/looker/info":
             url = board_config()["lookerEmbedUrl"]
             self._json(200, {"url": url, "ok": looker_access(url) if url else None})
+            return
+        if path.startswith("/fonts/"):
+            self._font(path[len("/fonts/"):])
             return
         if path == "/health":
             self._json(200, {"ok": True})

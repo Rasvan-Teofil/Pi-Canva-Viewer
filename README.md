@@ -55,6 +55,14 @@ journalctl -t pi-screen-board -t pi-screen-cec -n 50 --no-pager
 cat ~/.local/share/pi-screen/board-server.log
 ```
 
+## Schrift Flama Semicondensed
+
+- Lizenzierte Schrift, liegt **nicht** im Repo (öffentlich, `*.otf` steht in `.gitignore`)
+- Dateien auf dem Pi ablegen: `~/.config/pi-screen/fonts/FlamaSemicondensed-Book.otf` und `FlamaSemicondensed-Medium.otf`
+- Der Board-Server liefert sie unter `/fonts/…` aus; danach `pkill -f pi-screen/board-profile`
+- Medium: Uhr, Bibelstelle, Claim · Book: Datum, Verstext
+- Fehlen die Dateien, nutzt das Board Roboto Condensed
+
 ## Stufe 2: Canva-Diashow
 
 - Pfeiltaste rechts/links wechselt zwischen Board und Canva (zyklisch)
