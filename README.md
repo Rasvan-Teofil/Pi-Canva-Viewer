@@ -11,7 +11,7 @@ Die bisherigen Dashboard-/Notion-/Fleet-Experimente wurden verworfen und sind un
 
 ## Stufe 1: Board (aktueller Weg)
 
-Fullscreen-Board mit Bibelvers, ICF-Logo und Uhrzeit. Läuft als der bereits eingeloggte Desktop-User, komplett offline.
+Fullscreen-Board mit Bibelvers, ICF-Logo und Uhrzeit. Läuft als der bereits eingeloggte Desktop-User. Internet nur für Vers, Canva und Looker, das Board selbst läuft auch offline.
 
 **Installieren / aktualisieren** (per SSH als Desktop-User, ohne `sudo` davor):
 
@@ -29,7 +29,11 @@ Das Skript:
 - startet das Board sofort auf `DISPLAY=:0`, ohne Reboot
 
 **Inhalt**
-- Vers des Tages aus `board/verses.js` (22 Verse, Wechsel täglich um Mitternacht)
+- Vers des Tages von YouVersion (derselbe wie auf bible.com/de), Standard „Hoffnung für alle“, Kürzel klein hinter der Stelle
+  - Abruf über den Board-Server (`GET /verse`), Cache pro Tag in `~/.local/share/pi-screen/verse-cache.json`
+  - Offline oder Abruf fehlgeschlagen: Vers aus `board/verses.js` (22 Verse), neuer Versuch alle 30 min
+  - Config in `board.env`: `VERSE_SOURCE=youversion|local`, `YOUVERSION_VERSION` (73 HFA, 157 Schlachter 2000, 51 Luther 1912), optional `YOUVERSION_APP_KEY`
+  - Test per SSH: `curl -s http://127.0.0.1:8787/verse`
 - ICF-Logo weiß oben mittig, Uhr HH:MM, Datum deutsch (Europe/Berlin)
 - Auslieferung über lokalen Server `http://127.0.0.1:8787/` (`scripts/board-server.py`), Fallback `file://`
 

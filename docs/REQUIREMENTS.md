@@ -6,7 +6,8 @@ Stand: 03.11.2026 · Branch `main`
 
 **Stufe 1 – Board (jetzt)**
 - Fullscreen-Board: Bibelvers des Tages, ICF-Logo, Uhrzeit + Datum
-- Offline, keine externen Requests
+- Vers des Tages von YouVersion (bible.com/de, HFA), Fallback offline auf `board/verses.js`
+- Board läuft auch offline
 - Läuft als eingeloggter Desktop-User, Autostart per XDG/labwc
 - Install per One-Liner: `scripts/install-board.sh`
 - HDMI-CEC-Zeitplan: TV an/aus zu festen Uhrzeiten, optional Wochentage (`~/.config/pi-screen/schedule.env`, crontab)

@@ -6,6 +6,7 @@ temporären Testbuttons:
   POST /tv/on   -> cec-control.sh on
   POST /tv/off  -> cec-control.sh off
   GET  /tv/status
+  GET  /verse   -> Vers des Tages von YouVersion (Fallback im Board: verses.js)
 Nur stdlib, lauscht ausschließlich auf 127.0.0.1.
 """
 import json
@@ -18,6 +19,9 @@ import urllib.error
 import urllib.request
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import verse_source  # noqa: E402  Vers des Tages (YouVersion)
 
 REPO = Path(__file__).resolve().parent.parent
 BOARD_DIR = REPO / "board"
@@ -213,6 +217,12 @@ class Handler(SimpleHTTPRequestHandler):
             return
         if path.startswith("/fonts/"):
             self._font(path[len("/fonts/"):])
+            return
+        if path == "/verse":
+            env = read_env(CONFIG_FILE)
+            v = verse_source.verse_of_the_day(env)
+            off = env.get("VERSE_SOURCE", "youversion").strip().lower() != "youversion"
+            self._json(200, dict(v, ok=True) if v else {"ok": False, "source": "local" if off else "error"})
             return
         if path == "/health":
             self._json(200, {"ok": True})

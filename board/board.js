@@ -22,12 +22,44 @@
     return Math.floor(Date.UTC(+p[0], +p[1] - 1, +p[2]) / 86400000);
   }
 
+  function renderVerse(text, ref, version) {
+    elText.textContent = "„" + text + "“";
+    elRef.textContent = ref;
+    if (version) {
+      var tag = document.createElement("span");
+      tag.className = "verse-version";
+      tag.textContent = version;
+      elRef.appendChild(tag);
+    }
+    elText.className = "verse-text" + (text.length > 150 ? " long" : text.length > 90 ? " medium" : "");
+  }
+
+  // Lokaler Vers sofort, danach Vers des Tages von YouVersion über den Board-Server (/verse)
+  var verseRetry = null;
   function showVerse(isoDate) {
-    if (!verses.length) return;
-    var v = verses[dayIndex(isoDate) % verses.length];
-    elText.textContent = "„" + v.text + "“";
-    elRef.textContent = v.ref;
-    elText.className = "verse-text" + (v.text.length > 150 ? " long" : v.text.length > 90 ? " medium" : "");
+    if (verses.length) {
+      var v = verses[dayIndex(isoDate) % verses.length];
+      renderVerse(v.text, v.ref, "");
+    }
+    loadRemoteVerse(isoDate);
+  }
+
+  function loadRemoteVerse(isoDate) {
+    clearTimeout(verseRetry);
+    if (location.protocol === "file:") return;
+    fetch("/verse", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (isoDate !== currentDay) return;
+        if (j && j.ok && j.text && j.date === isoDate) {
+          renderVerse(j.text, j.reference, j.version);
+        } else if (!j || j.source !== "local") {
+          verseRetry = setTimeout(function () { loadRemoteVerse(isoDate); }, 30 * 60 * 1000);
+        }
+      })
+      .catch(function () {
+        verseRetry = setTimeout(function () { loadRemoteVerse(isoDate); }, 30 * 60 * 1000);
+      });
   }
 
   function tick() {
