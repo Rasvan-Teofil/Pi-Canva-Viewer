@@ -55,6 +55,28 @@ journalctl -t pi-screen-board -t pi-screen-cec -n 50 --no-pager
 cat ~/.local/share/pi-screen/board-server.log
 ```
 
+## Stufe 2: Canva-Diashow
+
+- Pfeiltaste rechts/links wechselt zwischen Board und Canva (zyklisch)
+- Canva läuft als öffentliches Embed (`…/view?embed`) im Vollbild, Steuerleiste ausgeblendet
+- Weiterblättern macht das Board selbst: alle `CANVA_SLIDE_SECONDS` die nächste Seite, nach der letzten wieder Seite 1
+- Seitenzahl erkennt der Board-Server automatisch, Design-Änderungen kommen alle `CANVA_RELOAD_MINUTES` an
+- Braucht Internet; ohne Verbindung erscheint ein Hinweis
+
+**Einstellungen** in `~/.config/pi-screen/board.env` (fehlende Keys ergänzt der Installer):
+
+| Key | Default | Bedeutung |
+| --- | --- | --- |
+| `CANVA_URL` | Bistro Slide Loop (`DAGeJOlW_fg`) | edit-, view- oder embed-Link |
+| `CANVA_SLIDE_SECONDS` | `10` | Sekunden pro Folie |
+| `CANVA_PAGES` | `0` | Seitenzahl, `0` = automatisch |
+| `CANVA_RELOAD_MINUTES` | `30` | Neuladen für Design-Änderungen |
+| `START_VIEW` | `board` | Ansicht beim Start: `board` oder `canva` |
+
+Nach einer Änderung: `pkill -f pi-screen/board-profile` (Chromium startet in 3 s neu).
+
+**Canva-Freigabe** (einmalig pro Design): In Canva *Teilen → Mehr anzeigen → Einbetten* bzw. Link auf „Jeder mit dem Link kann ansehen“. Ohne Freigabe zeigt die Ansicht eine Canva-Login-Seite.
+
 Die folgenden Abschnitte beschreiben den älteren Weg mit eigenem `canva`-User (`bootstrap-pi.sh`). Auf dem aktuellen Pi hat er nicht gegriffen.
 
 ## Frischen Pi installieren

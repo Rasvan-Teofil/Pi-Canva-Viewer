@@ -120,3 +120,44 @@ html, body {
 .test-panel button:focus,
 .test-panel button:hover { background: rgba(255, 255, 255, 0.15); outline: none; }
 .test-status { min-width: 0; opacity: 0.7; }
+
+/* ---------- Stufe 2: Ansichten + Canva-Diashow ---------- */
+.view {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.6s ease, visibility 0s linear 0.6s;
+}
+.view.is-active {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.6s ease, visibility 0s;
+}
+
+/* iframe oben/unten um --canva-crop größer als der Screen:
+   die 16:9-Folie füllt genau 100vh, Canvas Steuerleiste liegt außerhalb */
+.view-canva { --canva-crop: 10vh; overflow: hidden; }
+.view-canva iframe {
+  position: absolute;
+  left: 0;
+  top: calc(-1 * var(--canva-crop));
+  width: 100vw;
+  height: calc(100vh + 2 * var(--canva-crop));
+  border: 0;
+  pointer-events: none;
+}
+.canva-shield { position: absolute; inset: 0; }
+.canva-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 4vh;
+  transform: translateX(-50%);
+  padding: 1vh 1.5vw;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 0.6vh;
+  font-size: 2vh;
+  letter-spacing: 0.05em;
+}
+.canva-hint[hidden] { display: none; }

@@ -10,8 +10,11 @@ Nur stdlib, lauscht ausschließlich auf 127.0.0.1.
 """
 import json
 import os
+import re
 import subprocess
 import sys
+import time
+import urllib.request
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -38,6 +41,61 @@ def read_env(path):
 
 def show_test_buttons():
     return read_env(CONFIG_FILE).get("SHOW_TEST_BUTTONS", "false").lower() in ("1", "true", "yes", "on")
+
+
+DEFAULT_CANVA_URL = "https://www.canva.com/design/DAGeJOlW_fg/dcvDxGynTmQVinQOyVVR2Q/view"
+_canva_cache = {"url": None, "at": 0.0, "pages": 0}
+
+
+def canva_embed_url(env):
+    """Beliebigen Canva-Link (edit/view/watch) oder ID+Token in die ?embed-Form bringen."""
+    url = env.get("CANVA_URL", "").strip()
+    if not url and env.get("CANVA_DESIGN_ID"):
+        url = "https://www.canva.com/design/%s/%s/view" % (
+            env["CANVA_DESIGN_ID"].strip(), env.get("CANVA_VIEW_TOKEN", "").strip())
+    url = url or DEFAULT_CANVA_URL
+    m = re.search(r"canva\.com/design/([^/?#]+)(?:/([^/?#]+))?", url)
+    if not m:
+        return url
+    parts = ["https://www.canva.com/design", m.group(1)]
+    if m.group(2) and m.group(2) not in ("view", "edit", "watch"):
+        parts.append(m.group(2))
+    return "/".join(parts) + "/view?embed"
+
+
+def canva_pages(url):
+    """Seitenzahl aus dem öffentlichen Embed-HTML lesen (10 min Cache, 0 = unbekannt)."""
+    now = time.time()
+    if _canva_cache["url"] == url and now - _canva_cache["at"] < 600 and _canva_cache["pages"]:
+        return _canva_cache["pages"]
+    pages = 0
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (X11; Linux aarch64) Chrome/130"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            html = resp.read().decode("utf-8", "replace")
+        ids = re.findall(r'"A\?":"i","a":"(P[A-Za-z0-9_-]{15})"', html)
+        pages = len(dict.fromkeys(ids))
+    except Exception as exc:  # offline, Canva-Änderung o. Ä.
+        sys.stderr.write("board-server: Canva-Seitenzahl nicht lesbar: %s\n" % exc)
+    _canva_cache.update(url=url, at=now, pages=pages)
+    return pages
+
+
+def board_config():
+    env = read_env(CONFIG_FILE)
+    def num(key, default):
+        try:
+            return float(env.get(key, default))
+        except ValueError:
+            return default
+    return {
+        "showTestButtons": env.get("SHOW_TEST_BUTTONS", "false").lower() in ("1", "true", "yes", "on"),
+        "startView": env.get("START_VIEW", "board").strip() or "board",
+        "canvaEmbedUrl": canva_embed_url(env),
+        "canvaSlideSeconds": num("CANVA_SLIDE_SECONDS", 10),
+        "canvaPages": int(num("CANVA_PAGES", 0)),
+        "canvaReloadMinutes": num("CANVA_RELOAD_MINUTES", 30),
+    }
 
 
 def run_cec(action):
@@ -72,7 +130,7 @@ class Handler(SimpleHTTPRequestHandler):
         path = self.path.split("?", 1)[0]
         if path == "/board-config.js":
             body = ("window.PI_SCREEN_BOARD_CONFIG = %s;\n"
-                    % json.dumps({"showTestButtons": show_test_buttons()})).encode("utf-8")
+                    % json.dumps(board_config())).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "application/javascript; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
@@ -82,6 +140,10 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/tv/status":
             ok, out = run_cec("status")
             self._json(200 if ok else 500, {"ok": ok, "output": out})
+            return
+        if path == "/canva/info":
+            url = board_config()["canvaEmbedUrl"]
+            self._json(200, {"url": url, "pages": canva_pages(url)})
             return
         if path == "/health":
             self._json(200, {"ok": True})

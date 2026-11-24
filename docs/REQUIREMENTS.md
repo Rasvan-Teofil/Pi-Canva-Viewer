@@ -12,11 +12,15 @@ Stand: 03.11.2026 · Branch `main`
 - HDMI-CEC-Zeitplan: TV an/aus zu festen Uhrzeiten, optional Wochentage (`~/.config/pi-screen/schedule.env`, crontab)
 - **Temporär:** Testbuttons „TV aus“ / „TV an“ auf dem Board, abschaltbar per `SHOW_TEST_BUTTONS=false`
 
-**Stufe 2 – Canva**
-- Zweites Fenster mit der Canva-Präsentation
+**Stufe 2 – Canva (umgesetzt)**
+- Zweite Ansicht neben dem Board, Wechsel per Pfeiltaste links/rechts (zyklisch, erweiterbar)
+- Canva-Diashow im Vollbild über das öffentliche Embed, Weiterblättern per Timer (`CANVA_SLIDE_SECONDS`)
+- Design konfigurierbar (`CANVA_URL` in `board.env`), Default „Bistro Slide Loop“ (`DAGeJOlW_fg`)
+- Start-Ansicht konfigurierbar (`START_VIEW`)
+- Eine Chromium-Instanz, Tastaturfokus bleibt beim Board
 
 **Stufe 3 – Notion (später)**
-- Drittes Fenster: Todo-Datenbank aus Notion
+- Dritte Ansicht: Todo-Datenbank aus Notion, im selben Pfeiltasten-Wechsel
 
 ## V1 – Muss
 1. **Frischer Pi** – sauberes Raspberry Pi OS, Setup von null.

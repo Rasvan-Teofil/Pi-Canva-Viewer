@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="board.css">
 </head>
 <body>
+<div class="view view-board is-active" id="view-board" data-view="board">
   <img class="logo" src="assets/icf-logo-white.png" alt="ICF">
 
   <main class="stage">
@@ -31,10 +32,21 @@
     <button type="button" data-tv="on">TV an</button>
     <span class="test-status" id="test-status"></span>
   </aside>
+</div>
+
+<!-- Stufe 2: Canva-Diashow. Wechsel per Pfeiltaste links/rechts. -->
+<div class="view view-canva" id="view-canva" data-view="canva" aria-hidden="true">
+  <iframe id="canva-frame" title="Canva-Diashow" tabindex="-1"
+          allow="fullscreen; autoplay" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  <!-- Fängt Maus/Touch ab, damit das iframe nie den Tastaturfokus bekommt -->
+  <div class="canva-shield" id="canva-shield"></div>
+  <div class="canva-hint" id="canva-hint" hidden></div>
+</div>
 
   <!-- board-config.js liefert nur der lokale Board-Server (scripts/board-server.py). -->
   <script src="board-config.js"></script>
   <script src="verses.js"></script>
   <script src="board.js"></script>
+  <script src="views.js"></script>
 </body>
 </html>
