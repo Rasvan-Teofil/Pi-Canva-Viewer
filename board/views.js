@@ -183,7 +183,7 @@
   var current = Math.max(0, names.indexOf(cfg.startView || "board"));
 
   // Seiten-Navigation (Pills unten links), aktive Ansicht hervorgehoben
-  var LABELS = { board: "Board", canva: "Canva", looker: "Looker", notion: cfg.notionLabel || "Notion-Volunteers" };
+  var LABELS = { board: "Board", canva: cfg.canvaLabel || "Church-Loop", looker: cfg.lookerLabel || "Church Metrics", notion: cfg.notionLabel || "Notion-Volunteers" };
   var nav = document.getElementById("view-nav");
   var pills = names.map(function (n) {
     var el = document.createElement("span");
