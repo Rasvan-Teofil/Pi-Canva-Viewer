@@ -166,3 +166,33 @@ html, body {
   transition: opacity 0.8s ease;
 }
 .looker-frame.is-front { opacity: 1; }
+
+/* Seiten-Navigation: kleine Pills unten links, auf allen Ansichten (auch über Canva/Looker) */
+.view-nav {
+  position: fixed;
+  left: 1.6vw;
+  bottom: 2.2vh;
+  z-index: 10;
+  display: flex;
+  gap: 0.5vw;
+  pointer-events: none;
+  font-size: 1.35vh;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.view-nav[hidden] { display: none; }
+.view-pill {
+  padding: 0.45vh 0.9vw 0.35vh;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.2;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+.view-pill.is-active {
+  background: #fff;
+  border-color: #fff;
+  color: #000;
+}

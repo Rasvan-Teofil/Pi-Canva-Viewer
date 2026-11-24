@@ -131,8 +131,21 @@
   var names = views.map(function (v) { return v.getAttribute("data-view"); });
   var current = Math.max(0, names.indexOf(cfg.startView || "board"));
 
+  // Seiten-Navigation (Pills unten links), aktive Ansicht hervorgehoben
+  var LABELS = { board: "Board", canva: "Canva", looker: "Looker" };
+  var nav = document.getElementById("view-nav");
+  var pills = names.map(function (n) {
+    var el = document.createElement("span");
+    el.className = "view-pill";
+    el.textContent = LABELS[n] || n;
+    if (nav) nav.appendChild(el);
+    return el;
+  });
+  if (nav && names.length < 2) nav.hidden = true;
+
   function activate(i) {
     current = (i + views.length) % views.length;
+    pills.forEach(function (p, k) { p.classList.toggle("is-active", k === current); });
     all.forEach(function (v) {
       var on = v === views[current];
       v.classList.toggle("is-active", on);
