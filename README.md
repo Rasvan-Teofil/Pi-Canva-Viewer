@@ -103,7 +103,7 @@ Nach einer Änderung: `pkill -f pi-screen/board-profile` (Chromium startet in 3 
 
 ## Notion-Ansicht
 
-- Vierte Ansicht: Datenbank „Volunteer Aufgaben“ (Todos Kreativwerkstatt), Board-Ansicht „all“
+- Vierte Ansicht: Datenbank „Volunteer Aufgaben“ (Todos Kreativwerkstatt), Ansicht „New & Progress“
 - Öffentliche Embed-Form `icfhn.notion.site/ebd/<id>?v=<view>`; der Server wandelt app.notion.com-, notion.so- und notion.site-Links um
 - Notion-Topbar ausgeblendet, Neuladen alle `NOTION_RELOAD_MINUTES` verdeckt im zweiten iframe
 
@@ -112,7 +112,8 @@ Nach einer Änderung: `pkill -f pi-screen/board-profile` (Chromium startet in 3 
 | `NOTION_URL` | Todos Kreativwerkstatt | Link zur Datenbank-Ansicht; leer = Ansicht entfällt |
 | `NOTION_SITE_DOMAIN` | leer | nur nötig, wenn die Domain nicht im Link steht |
 | `NOTION_RELOAD_MINUTES` | `5` | Neuladen für aktuelle Daten |
-| `NOTION_ZOOM` | `1` | z.B. `0.8`, damit mehr Spalten passen |
+| `NOTION_ZOOM` | `1.3` | Skalierung; 1.3 = 130 % (4K-TV), 0.8 = mehr Spalten |
+| `NOTION_LABEL` | `Notion-Volunteers` | Beschriftung der Pill unten links |
 
 **Freigabe in Notion:** *Teilen → Veröffentlichen*. Alles in der Ansicht ist dann öffentlich lesbar, auch Namen der Verantwortlichen.
 
