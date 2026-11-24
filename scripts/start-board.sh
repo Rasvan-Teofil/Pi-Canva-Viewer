@@ -51,13 +51,32 @@ while true; do
     log "Board-Server nicht erreichbar, nutze file://"
     URL="file://$REPO_DIR/board/index.html"
   fi
-  # Absturz-Hinweis beim nächsten Start unterdrücken
-  sed -i 's/"exited_cleanly":false/"exited_cleanly":true/; s/"exit_type":"Crashed"/"exit_type":"Normal"/' \
-    "$PROFILE/Default/Preferences" 2>/dev/null || true
+  # Profil-Prefs: Übersetzen aus, Absturz-Hinweis unterdrücken
+  python3 - "$PROFILE/Default/Preferences" <<'PY' || log "Preferences konnten nicht gesetzt werden"
+import json, os, sys
+path = sys.argv[1]
+os.makedirs(os.path.dirname(path), exist_ok=True)
+try:
+    with open(path, encoding="utf-8") as f:
+        prefs = json.load(f)
+except (OSError, ValueError):
+    prefs = {}
+prefs.setdefault("translate", {})["enabled"] = False
+prefs["translate_blocked_languages"] = ["en", "de"]
+prefs.setdefault("intl", {})["accept_languages"] = "de-DE,de,en-US,en"
+prof = prefs.setdefault("profile", {})
+prof["exited_cleanly"] = True
+prof["exit_type"] = "Normal"
+tmp = path + ".tmp"
+with open(tmp, "w", encoding="utf-8") as f:
+    json.dump(prefs, f)
+os.replace(tmp, path)
+PY
   log "starte Chromium: $URL"
   "$BROWSER" --kiosk --noerrdialogs --disable-infobars --no-first-run \
     --disable-session-crashed-bubble --password-store=basic \
-    --disable-features=Translate --check-for-update-interval=31536000 \
+    --lang=de-DE --accept-lang=de-DE,de,en-US,en \
+    --disable-features=Translate,TranslateUI --check-for-update-interval=31536000 \
     --user-data-dir="$PROFILE" "$URL" >/dev/null 2>&1 9>&-
   log "Chromium beendet (Code $?), Neustart in 3 s"
   sleep 3
