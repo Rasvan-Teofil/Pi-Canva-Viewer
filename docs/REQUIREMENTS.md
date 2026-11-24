@@ -19,8 +19,13 @@ Stand: 03.11.2026 · Branch `main`
 - Start-Ansicht konfigurierbar (`START_VIEW`)
 - Eine Chromium-Instanz, Tastaturfokus bleibt beim Board
 
+**Looker Studio (umgesetzt)**
+- Dritte Ansicht: Looker-Studio-Bericht „ICF HN Dashboard“ im Vollbild, öffentlich eingebettet
+- Seiten automatisch durchblättern (`LOOKER_PAGES`, `LOOKER_PAGE_SECONDS`)
+- Ansichten und Reihenfolge per `VIEWS`, Ansicht ohne URL entfällt
+
 **Stufe 3 – Notion (später)**
-- Dritte Ansicht: Todo-Datenbank aus Notion, im selben Pfeiltasten-Wechsel
+- Weitere Ansicht: Todo-Datenbank aus Notion, im selben Pfeiltasten-Wechsel
 
 ## V1 – Muss
 1. **Frischer Pi** – sauberes Raspberry Pi OS, Setup von null.

@@ -161,3 +161,18 @@ html, body {
   letter-spacing: 0.05em;
 }
 .canva-hint[hidden] { display: none; }
+
+/* Looker Studio: Seitennavigation links und Fußzeile unten aus dem Bild schieben */
+.view-looker { --looker-left: 60px; --looker-bottom: 34px; overflow: hidden; background: #fff; }
+.looker-frame {
+  position: absolute;
+  top: 0;
+  left: calc(-1 * var(--looker-left));
+  width: calc(100vw + var(--looker-left));
+  height: calc(100vh + var(--looker-bottom));
+  border: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+.looker-frame.is-front { opacity: 1; }

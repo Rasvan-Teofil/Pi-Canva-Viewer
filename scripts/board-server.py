@@ -14,6 +14,7 @@ import re
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.request
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -81,6 +82,42 @@ def canva_pages(url):
     return pages
 
 
+def looker_embed_url(env):
+    """Looker-Studio-Link (reporting/embed, alte datastudio-Domain) in die /embed/-Form bringen."""
+    url = env.get("LOOKER_URL", "").strip()
+    if not url:
+        return ""
+    m = re.search(r"/reporting/([0-9a-fA-F-]{20,})(?:/page/([^/?#]+))?", url)
+    if not m:
+        return url
+    out = "https://lookerstudio.google.com/embed/reporting/" + m.group(1)
+    if m.group(2):
+        out += "/page/" + m.group(2)
+    return out
+
+
+_looker_cache = {"url": None, "at": 0.0, "ok": None}
+
+
+def looker_access(url):
+    """Grobe Prüfung: lädt der Embed-Link ohne Google-Login? (10 min Cache, None = unbekannt)"""
+    now = time.time()
+    if _looker_cache["url"] == url and now - _looker_cache["at"] < 600:
+        return _looker_cache["ok"]
+    ok = None
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (X11; Linux aarch64) Chrome/130"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            final = resp.geturl()
+            ok = resp.status == 200 and "accounts.google.com" not in final
+    except urllib.error.HTTPError:
+        ok = False
+    except Exception as exc:
+        sys.stderr.write("board-server: Looker nicht prüfbar: %s\n" % exc)
+    _looker_cache.update(url=url, at=now, ok=ok)
+    return ok
+
+
 def board_config():
     env = read_env(CONFIG_FILE)
     def num(key, default):
@@ -95,6 +132,11 @@ def board_config():
         "canvaSlideSeconds": num("CANVA_SLIDE_SECONDS", 10),
         "canvaPages": int(num("CANVA_PAGES", 0)),
         "canvaReloadMinutes": num("CANVA_RELOAD_MINUTES", 30),
+        "views": [v.strip() for v in env.get("VIEWS", "board,canva,looker").split(",") if v.strip()],
+        "lookerEmbedUrl": looker_embed_url(env),
+        "lookerPages": [p.strip() for p in env.get("LOOKER_PAGES", "").split(",") if p.strip()],
+        "lookerPageSeconds": num("LOOKER_PAGE_SECONDS", 30),
+        "lookerReloadMinutes": num("LOOKER_RELOAD_MINUTES", 10),
     }
 
 
@@ -144,6 +186,10 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/canva/info":
             url = board_config()["canvaEmbedUrl"]
             self._json(200, {"url": url, "pages": canva_pages(url)})
+            return
+        if path == "/looker/info":
+            url = board_config()["lookerEmbedUrl"]
+            self._json(200, {"url": url, "ok": looker_access(url) if url else None})
             return
         if path == "/health":
             self._json(200, {"ok": True})

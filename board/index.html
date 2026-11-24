@@ -44,6 +44,16 @@
   <div class="canva-hint" id="canva-hint" hidden></div>
 </div>
 
+<!-- Looker-Studio-Bericht. Zwei iframes: die nächste Seite lädt verdeckt. -->
+<div class="view view-looker" id="view-looker" data-view="looker" aria-hidden="true">
+  <iframe id="looker-frame-a" class="looker-frame is-front" title="Looker Studio" tabindex="-1" translate="no"
+          allowfullscreen sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+  <iframe id="looker-frame-b" class="looker-frame" title="Looker Studio" tabindex="-1" translate="no"
+          allowfullscreen sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+  <div class="canva-shield"></div>
+  <div class="canva-hint" id="looker-hint" hidden></div>
+</div>
+
   <!-- board-config.js liefert nur der lokale Board-Server (scripts/board-server.py). -->
   <script src="board-config.js"></script>
   <script src="verses.js"></script>

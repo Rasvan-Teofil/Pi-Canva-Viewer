@@ -77,6 +77,23 @@ Nach einer Änderung: `pkill -f pi-screen/board-profile` (Chromium startet in 3 
 
 **Canva-Freigabe** (einmalig pro Design): In Canva *Teilen → Mehr anzeigen → Einbetten* bzw. Link auf „Jeder mit dem Link kann ansehen“. Ohne Freigabe zeigt die Ansicht eine Canva-Login-Seite.
 
+## Looker-Studio-Ansicht
+
+- Dritte Ansicht im Pfeiltasten-Wechsel: Board → Canva → Looker → Board
+- Bericht „ICF HN Dashboard“ als öffentliches Embed (`lookerstudio.google.com/embed/reporting/…`), Seitennavigation und Fußzeile ausgeblendet
+- Blättert durch die Seiten aus `LOOKER_PAGES`; die nächste Seite lädt verdeckt und wird dann eingeblendet
+- Ohne Internet oder ohne Freigabe erscheint ein Hinweis, Board und Canva laufen weiter
+
+| Key | Default | Bedeutung |
+| --- | --- | --- |
+| `LOOKER_URL` | ICF HN Dashboard | reporting-, embed- oder datastudio-Link; leer = Ansicht entfällt |
+| `LOOKER_PAGES` | 4 Seiten-IDs | IDs aus `…/page/<ID>`, kommagetrennt; leer = nur erste Seite |
+| `LOOKER_PAGE_SECONDS` | `30` | Sekunden pro Seite (min. 10) |
+| `LOOKER_RELOAD_MINUTES` | `10` | Neuladen bei nur einer Seite |
+| `VIEWS` | `board,canva,looker` | Reihenfolge; Ansichten ohne URL werden übersprungen |
+
+**Freigabe in Looker Studio** (für einen anderen Bericht): *Teilen → Link-Einstellungen → „Jeder im Internet mit dem Link kann ansehen“* und *Datei → Bericht einbetten → „Einbetten zulassen“*. Datenquellen mit Anmeldedaten des Inhabers („Owner’s credentials“).
+
 Die folgenden Abschnitte beschreiben den älteren Weg mit eigenem `canva`-User (`bootstrap-pi.sh`). Auf dem aktuellen Pi hat er nicht gegriffen.
 
 ## Frischen Pi installieren
