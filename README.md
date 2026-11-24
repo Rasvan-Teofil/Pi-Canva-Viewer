@@ -86,7 +86,7 @@ Nach einer Änderung: `pkill -f pi-screen/board-profile` (Chromium startet in 3 
 
 ## Looker-Studio-Ansicht
 
-- Dritte Ansicht im Pfeiltasten-Wechsel: Board → Canva → Looker → Board
+- Dritte Ansicht im Pfeiltasten-Wechsel: Board → Canva → Looker → Notion → Board
 - Bericht „ICF HN Dashboard“ als öffentliches Embed (`lookerstudio.google.com/embed/reporting/…`), Seitennavigation und Fußzeile ausgeblendet
 - Blättert durch die Seiten aus `LOOKER_PAGES`; die nächste Seite lädt verdeckt und wird dann eingeblendet
 - Ohne Internet oder ohne Freigabe erscheint ein Hinweis, Board und Canva laufen weiter
@@ -97,9 +97,24 @@ Nach einer Änderung: `pkill -f pi-screen/board-profile` (Chromium startet in 3 
 | `LOOKER_PAGES` | 4 Seiten-IDs | IDs aus `…/page/<ID>`, kommagetrennt; leer = nur erste Seite |
 | `LOOKER_PAGE_SECONDS` | `30` | Sekunden pro Seite (min. 10) |
 | `LOOKER_RELOAD_MINUTES` | `10` | Neuladen bei nur einer Seite |
-| `VIEWS` | `board,canva,looker` | Reihenfolge; Ansichten ohne URL werden übersprungen |
+| `VIEWS` | `board,canva,looker,notion` | Reihenfolge; Ansichten ohne URL werden übersprungen |
 
 **Freigabe in Looker Studio** (für einen anderen Bericht): *Teilen → Link-Einstellungen → „Jeder im Internet mit dem Link kann ansehen“* und *Datei → Bericht einbetten → „Einbetten zulassen“*. Datenquellen mit Anmeldedaten des Inhabers („Owner’s credentials“).
+
+## Notion-Ansicht
+
+- Vierte Ansicht: Datenbank „Volunteer Aufgaben“ (Todos Kreativwerkstatt), Board-Ansicht „all“
+- Öffentliche Embed-Form `icfhn.notion.site/ebd/<id>?v=<view>`; der Server wandelt app.notion.com-, notion.so- und notion.site-Links um
+- Notion-Topbar ausgeblendet, Neuladen alle `NOTION_RELOAD_MINUTES` verdeckt im zweiten iframe
+
+| Key | Default | Bedeutung |
+| --- | --- | --- |
+| `NOTION_URL` | Todos Kreativwerkstatt | Link zur Datenbank-Ansicht; leer = Ansicht entfällt |
+| `NOTION_SITE_DOMAIN` | leer | nur nötig, wenn die Domain nicht im Link steht |
+| `NOTION_RELOAD_MINUTES` | `5` | Neuladen für aktuelle Daten |
+| `NOTION_ZOOM` | `1` | z.B. `0.8`, damit mehr Spalten passen |
+
+**Freigabe in Notion:** *Teilen → Veröffentlichen*. Alles in der Ansicht ist dann öffentlich lesbar, auch Namen der Verantwortlichen.
 
 Die folgenden Abschnitte beschreiben den älteren Weg mit eigenem `canva`-User (`bootstrap-pi.sh`). Auf dem aktuellen Pi hat er nicht gegriffen.
 

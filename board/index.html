@@ -48,6 +48,16 @@
   <div class="canva-hint" id="looker-hint" hidden></div>
 </div>
 
+<!-- Notion-Datenbank (öffentliche Embed-Ansicht). Zwei iframes: Neuladen läuft verdeckt. -->
+<div class="view view-notion" id="view-notion" data-view="notion" aria-hidden="true">
+  <iframe id="notion-frame-a" class="notion-frame is-front" title="Notion" tabindex="-1" translate="no"
+          referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  <iframe id="notion-frame-b" class="notion-frame" title="Notion" tabindex="-1" translate="no"
+          referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  <div class="canva-shield"></div>
+  <div class="canva-hint" id="notion-hint" hidden></div>
+</div>
+
 <!-- Seiten-Navigation unten links, über allen Ansichten (füllt views.js) -->
 <nav class="view-nav" id="view-nav" aria-label="Ansichten"></nav>
 

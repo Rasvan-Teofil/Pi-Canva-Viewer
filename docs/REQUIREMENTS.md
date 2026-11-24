@@ -25,8 +25,9 @@ Stand: 03.11.2026 · Branch `main`
 - Seiten automatisch durchblättern (`LOOKER_PAGES`, `LOOKER_PAGE_SECONDS`)
 - Ansichten und Reihenfolge per `VIEWS`, Ansicht ohne URL entfällt
 
-**Stufe 3 – Notion (später)**
-- Weitere Ansicht: Todo-Datenbank aus Notion, im selben Pfeiltasten-Wechsel
+**Notion (umgesetzt)**
+- Vierte Ansicht: Todo-Datenbank „Volunteer Aufgaben“ als öffentliche Notion-Embed-Ansicht, im selben Pfeiltasten-Wechsel
+- Neuladen alle 5 min (`NOTION_RELOAD_MINUTES`), Notion-Topbar ausgeblendet
 
 ## V1 – Muss
 1. **Frischer Pi** – sauberes Raspberry Pi OS, Setup von null.

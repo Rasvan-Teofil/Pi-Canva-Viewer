@@ -1,4 +1,4 @@
-// Pi-Screen · Ansichten per Pfeiltaste (Board, Canva, Looker), Diashows
+// Pi-Screen · Ansichten per Pfeiltaste (Board, Canva, Looker, Notion), Diashows
 (function () {
   "use strict";
 
@@ -118,9 +118,60 @@
              state: function () { return { page: index + 1, pages: urls.length }; } };
   })();
 
+  // ---------------- Notion: öffentliche Datenbank-Ansicht, Neuladen verdeckt im zweiten iframe ----------------
+  var notion = (function () {
+    var url = cfg.notionEmbedUrl || "";
+    var hint = document.getElementById("notion-hint");
+    if (!url) return { available: false, start: function () {}, stop: function () {}, state: function () { return {}; } };
+
+    var reloadMs = Math.max(1, Number(cfg.notionReloadMinutes) || 5) * 60000;
+    var zoom = Number(cfg.notionZoom) || 1;
+    var view = document.getElementById("view-notion");
+    if (view && zoom > 0 && zoom !== 1) view.style.setProperty("--notion-zoom", String(zoom));
+    var frames = [document.getElementById("notion-frame-a"), document.getElementById("notion-frame-b")];
+    var front = 0, loadedAt = 0, timer = null, pending = null;
+
+    function load() {
+      var back = frames[1 - front];
+      if (pending) clearTimeout(pending.timeout);
+      var token = {};
+      pending = token;
+      token.timeout = setTimeout(function () {
+        if (pending === token) setHint(hint, navigator.onLine
+          ? "Notion lädt nicht – Datenbank unter Teilen → Veröffentlichen freigeben"
+          : "Keine Internetverbindung – Notion nicht erreichbar");
+      }, 45000);
+      back.onload = function () {
+        if (pending !== token || back.src === "about:blank") return;
+        setTimeout(function () {
+          if (pending !== token) return;
+          clearTimeout(token.timeout);
+          pending = null;
+          setHint(hint, "");
+          back.classList.add("is-front");
+          frames[front].classList.remove("is-front");
+          front = 1 - front;
+          loadedAt = Date.now();
+        }, 8000);   // Notion-Inhalte (Personen, Bilder) fertig rendern lassen
+      };
+      // gleiche URL neu setzen lädt neu; kein Cache-Buster-Parameter (Notion öffnet bei ?t= die Chat-Seitenleiste)
+      if (back.src === url) back.src = "about:blank";
+      setTimeout(function () { back.src = url; }, back.src === "about:blank" ? 200 : 0);
+    }
+    function tick() { if (Date.now() - loadedAt > reloadMs) load(); }
+    function start() { stop(); tick(); timer = setInterval(tick, 30000); }
+    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+
+    // auch im Hintergrund regelmäßig aktualisieren, damit beim Umschalten frische Daten da sind
+    load();
+    setInterval(function () { if (!timer) tick(); }, 60000);
+    return { available: true, start: start, stop: stop,
+             state: function () { return { loadedAt: loadedAt }; } };
+  })();
+
   // ---------------- Ansichten ----------------
-  var controllers = { board: { available: true, start: function () {}, stop: function () {} }, canva: canva, looker: looker };
-  var wanted = (cfg.views && cfg.views.length ? cfg.views : ["board", "canva", "looker"]);
+  var controllers = { board: { available: true, start: function () {}, stop: function () {} }, canva: canva, looker: looker, notion: notion };
+  var wanted = (cfg.views && cfg.views.length ? cfg.views : ["board", "canva", "looker", "notion"]);
   var all = Array.prototype.slice.call(document.querySelectorAll(".view"));
   var views = [];
   wanted.forEach(function (name) {
@@ -132,7 +183,7 @@
   var current = Math.max(0, names.indexOf(cfg.startView || "board"));
 
   // Seiten-Navigation (Pills unten links), aktive Ansicht hervorgehoben
-  var LABELS = { board: "Board", canva: "Canva", looker: "Looker" };
+  var LABELS = { board: "Board", canva: "Canva", looker: "Looker", notion: "Notion" };
   var nav = document.getElementById("view-nav");
   var pills = names.map(function (n) {
     var el = document.createElement("span");
@@ -174,6 +225,6 @@
   activate(current);
 
   window.PI_SCREEN_VIEWS = { activate: activate, state: function () {
-    return { view: names[current], views: names, canva: canva.state(), looker: looker.state() };
+    return { view: names[current], views: names, canva: canva.state(), looker: looker.state(), notion: notion.state() };
   } };
 })();

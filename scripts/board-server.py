@@ -13,6 +13,7 @@ import subprocess
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -96,6 +97,35 @@ def looker_embed_url(env):
     return out
 
 
+def notion_embed_url(env):
+    """Notion-Link (app.notion.com/p/<domain>/…, <domain>.notion.site/…, notion.so/…) in die
+    öffentliche Embed-Form <domain>.notion.site/ebd/<id>?v=<view> bringen (ohne Topbar, einbettbar)."""
+    url = env.get("NOTION_URL", "").strip()
+    if not url:
+        return ""
+    parsed = urllib.parse.urlparse(url)
+    m = re.search(r"([0-9a-fA-F]{32})(?:[/?#]|$)", parsed.path.replace("-", "") + "/")
+    if not m:
+        return url
+    page_id = m.group(1)
+    domain = env.get("NOTION_SITE_DOMAIN", "").strip()
+    host = parsed.netloc.lower()
+    if not domain:
+        if host.endswith(".notion.site"):
+            domain = host[: -len(".notion.site")]
+        else:
+            dm = re.match(r"/p/([A-Za-z0-9_-]+)/", parsed.path) or re.match(r"/([A-Za-z0-9_-]+)/", parsed.path)
+            if dm and not re.fullmatch(r"[0-9a-fA-F]{32}", dm.group(1)):
+                domain = dm.group(1)
+    if not domain:
+        return url
+    out = "https://%s.notion.site/ebd/%s" % (domain, page_id)
+    view = urllib.parse.parse_qs(parsed.query).get("v", [""])[0]
+    if view:
+        out += "?v=" + view
+    return out
+
+
 _looker_cache = {"url": None, "at": 0.0, "ok": None}
 
 
@@ -131,11 +161,14 @@ def board_config():
         "canvaSlideSeconds": num("CANVA_SLIDE_SECONDS", 10),
         "canvaPages": int(num("CANVA_PAGES", 0)),
         "canvaReloadMinutes": num("CANVA_RELOAD_MINUTES", 30),
-        "views": [v.strip() for v in env.get("VIEWS", "board,canva,looker").split(",") if v.strip()],
+        "views": [v.strip() for v in env.get("VIEWS", "board,canva,looker,notion").split(",") if v.strip()],
         "lookerEmbedUrl": looker_embed_url(env),
         "lookerPages": [p.strip() for p in env.get("LOOKER_PAGES", "").split(",") if p.strip()],
         "lookerPageSeconds": num("LOOKER_PAGE_SECONDS", 30),
         "lookerReloadMinutes": num("LOOKER_RELOAD_MINUTES", 10),
+        "notionEmbedUrl": notion_embed_url(env),
+        "notionReloadMinutes": num("NOTION_RELOAD_MINUTES", 5),
+        "notionZoom": num("NOTION_ZOOM", 1),
     }
 
 

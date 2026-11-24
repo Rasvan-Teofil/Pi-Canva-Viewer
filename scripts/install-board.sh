@@ -131,7 +131,7 @@ else
 fi
 
 log "Fertig."
-log "Board-Config:  $CONF_DIR/board.env  (CANVA_URL, CANVA_SLIDE_SECONDS, START_VIEW)"
+log "Board-Config:  $CONF_DIR/board.env  (CANVA_URL, LOOKER_URL, NOTION_URL, VIEWS)"
 log "Ansicht wechseln: Pfeiltaste links/rechts"
 log "Zeitplan:      $CONF_DIR/schedule.env  -> danach $REPO_DIR/scripts/apply-schedule.sh"
 log "TV per SSH:    $REPO_DIR/scripts/cec-control.sh on|off|status"
