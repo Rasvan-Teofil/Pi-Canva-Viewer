@@ -112,7 +112,7 @@ Nach einer Änderung: `pkill -f pi-screen/board-profile` (Chromium startet in 3 
 | `NOTION_URL` | Todos Kreativwerkstatt | Link zur Datenbank-Ansicht; leer = Ansicht entfällt |
 | `NOTION_SITE_DOMAIN` | leer | nur nötig, wenn die Domain nicht im Link steht |
 | `NOTION_RELOAD_MINUTES` | `5` | Neuladen für aktuelle Daten |
-| `NOTION_ZOOM` | `1.3` | Skalierung; 1.3 = 130 % (4K-TV), 0.8 = mehr Spalten |
+| `NOTION_ZOOM` | `1.6` | Skalierung; 1.6 = 160 % (4K-TV), 0.8 = mehr Spalten |
 | `NOTION_LABEL` | `Notion-Volunteers` | Beschriftung der Pill unten links |
 
 **Freigabe in Notion:** *Teilen → Veröffentlichen*. Alles in der Ansicht ist dann öffentlich lesbar, auch Namen der Verantwortlichen.

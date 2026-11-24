@@ -168,7 +168,7 @@ def board_config():
         "lookerReloadMinutes": num("LOOKER_RELOAD_MINUTES", 10),
         "notionEmbedUrl": notion_embed_url(env),
         "notionReloadMinutes": num("NOTION_RELOAD_MINUTES", 5),
-        "notionZoom": num("NOTION_ZOOM", 1.3),
+        "notionZoom": num("NOTION_ZOOM", 1.6),
         "notionLabel": env.get("NOTION_LABEL", "").strip() or "Notion-Volunteers",
     }
 
