@@ -194,9 +194,21 @@
   });
   if (nav && names.length < 2) nav.hidden = true;
 
+  // Pills nur kurz nach einem Ansichtswechsel zeigen, dann ausblenden (NAV_HIDE_SECONDS, 0 = immer sichtbar)
+  var navHideMs = Math.max(0, Number(cfg.navHideSeconds)) * 1000;
+  var navTimer = null;
+  function flashNav() {
+    if (!nav) return;
+    if (!navHideMs) { nav.classList.add("is-visible"); return; }
+    nav.classList.add("is-visible");
+    if (navTimer) clearTimeout(navTimer);
+    navTimer = setTimeout(function () { nav.classList.remove("is-visible"); }, navHideMs);
+  }
+
   function activate(i) {
     current = (i + views.length) % views.length;
     pills.forEach(function (p, k) { p.classList.toggle("is-active", k === current); });
+    flashNav();
     all.forEach(function (v) {
       var on = v === views[current];
       v.classList.toggle("is-active", on);

@@ -99,6 +99,7 @@ Nach einer Änderung: `pkill -f pi-screen/board-profile` (Chromium startet in 3 
 | `LOOKER_PAGE_SECONDS` | `30` | Sekunden pro Seite (min. 10) |
 | `LOOKER_RELOAD_MINUTES` | `10` | Neuladen bei nur einer Seite |
 | `LOOKER_LABEL` | `Church Metrics` | Beschriftung der Pill unten links |
+| `NAV_HIDE_SECONDS` | `3` | Pills unten links nach einem Wechsel so lange zeigen, dann ausblenden; `0` = immer sichtbar |
 | `VIEWS` | `board,canva,looker,notion` | Reihenfolge; Ansichten ohne URL werden übersprungen |
 
 **Freigabe in Looker Studio** (für einen anderen Bericht): *Teilen → Link-Einstellungen → „Jeder im Internet mit dem Link kann ansehen“* und *Datei → Bericht einbetten → „Einbetten zulassen“*. Datenquellen mit Anmeldedaten des Inhabers („Owner’s credentials“).

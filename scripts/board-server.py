@@ -169,6 +169,7 @@ def board_config():
         "notionEmbedUrl": notion_embed_url(env),
         "notionReloadMinutes": num("NOTION_RELOAD_MINUTES", 5),
         "notionZoom": num("NOTION_ZOOM", 1.6),
+        "navHideSeconds": num("NAV_HIDE_SECONDS", 3),
         "canvaLabel": env.get("CANVA_LABEL", "").strip() or "Church-Loop",
         "lookerLabel": env.get("LOOKER_LABEL", "").strip() or "Church Metrics",
         "notionLabel": env.get("NOTION_LABEL", "").strip() or "Notion-Volunteers",
