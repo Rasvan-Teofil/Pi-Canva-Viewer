@@ -54,11 +54,11 @@ chmod +x "$REPO_DIR"/scripts/*.sh "$REPO_DIR"/scripts/*.py
 mkdir -p "$CONF_DIR"
 [[ -f "$CONF_DIR/board.env" ]]    || cp "$REPO_DIR/config/board.env.example" "$CONF_DIR/board.env"
 [[ -f "$CONF_DIR/schedule.env" ]] || cp "$REPO_DIR/config/schedule.env.example" "$CONF_DIR/schedule.env"
-# Alter Standard-Zeitplan (08:00–22:30 täglich) -> neuer Standard (Mo–Fr 07:30–20:17); eigene Zeiten bleiben
+# Alter Standard-Zeitplan (08:00–22:30 täglich) -> neuer Standard (Mo–Fr 07:30–21:00); eigene Zeiten bleiben
 if grep -qx 'TV_ON=08:00' "$CONF_DIR/schedule.env" && grep -qx 'TV_OFF=22:30' "$CONF_DIR/schedule.env" \
    && grep -qx 'TV_DAYS=\*' "$CONF_DIR/schedule.env"; then
   cp "$REPO_DIR/config/schedule.env.example" "$CONF_DIR/schedule.env"
-  log "Zeitplan auf neuen Standard gesetzt (Mo–Fr 07:30 an, 20:17 aus)"
+  log "Zeitplan auf neuen Standard gesetzt (Mo–Fr 07:30 an, 21:00 aus)"
 fi
 # Testbuttons gibt es nicht mehr
 sed -i -e '/^SHOW_TEST_BUTTONS=/d' -e '/Testbuttons/d' "$CONF_DIR/board.env" 2>/dev/null || true

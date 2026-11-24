@@ -39,7 +39,7 @@ Das Skript:
 
 **HDMI-CEC-Zeitplan**
 ```bash
-nano ~/.config/pi-screen/schedule.env   # TV_ON=07:30, TV_OFF=20:17, TV_DAYS=1-5 (Standard: Mo–Fr; * | 1-5 | 0,6)
+nano ~/.config/pi-screen/schedule.env   # TV_ON=07:30, TV_OFF=21:00, TV_DAYS=1-5 (Standard: Mo–Fr; * | 1-5 | 0,6)
 ~/pi-screen/scripts/apply-schedule.sh   # übernimmt in die crontab
 ```
 

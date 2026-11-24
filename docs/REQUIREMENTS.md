@@ -11,7 +11,7 @@ Stand: 03.11.2026 · Branch `main`
 - Läuft als eingeloggter Desktop-User, Autostart per XDG/labwc
 - Install per One-Liner: `scripts/install-board.sh`
 - HDMI-CEC-Zeitplan: TV an/aus zu festen Uhrzeiten, optional Wochentage (`~/.config/pi-screen/schedule.env`, crontab)
-- Standard-Zeitplan: Mo–Fr 07:30 an, 20:17 aus, Sa/So aus
+- Standard-Zeitplan: Mo–Fr 07:30 an, 21:00 aus, Sa/So aus
 
 **Stufe 2 – Canva (umgesetzt)**
 - Zweite Ansicht neben dem Board, Wechsel per Pfeiltaste links/rechts (zyklisch, erweiterbar)
