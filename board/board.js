@@ -1,4 +1,4 @@
-// Pi-Screen Board · Uhr, Datum, Vers des Tages, optionale TV-Testbuttons
+// Pi-Screen Board · Uhr, Datum, Vers des Tages
 (function () {
   "use strict";
 
@@ -76,19 +76,4 @@
   tick();
   setInterval(tick, 1000);
 
-  // Temporäre Testbuttons: nur sichtbar, wenn der lokale Board-Server sie freigibt
-  if (cfg.showTestButtons) {
-    var panel = document.getElementById("test-panel");
-    var status = document.getElementById("test-status");
-    panel.hidden = false;
-    panel.addEventListener("click", function (ev) {
-      var action = ev.target && ev.target.getAttribute("data-tv");
-      if (!action) return;
-      status.textContent = "sende …";
-      fetch("/tv/" + action, { method: "POST" })
-        .then(function (r) { return r.json(); })
-        .then(function (j) { status.textContent = j.ok ? "OK: " + action : "Fehler"; })
-        .catch(function () { status.textContent = "kein Server"; });
-    });
-  }
 })();

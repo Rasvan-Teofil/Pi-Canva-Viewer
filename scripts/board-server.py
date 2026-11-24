@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 """Pi-Screen Board-Server (Stufe 1).
 
-Liefert board/ auf http://127.0.0.1:8787/ aus und bietet für die
-temporären Testbuttons:
-  POST /tv/on   -> cec-control.sh on
-  POST /tv/off  -> cec-control.sh off
-  GET  /tv/status
+Liefert board/ auf http://127.0.0.1:8787/ aus, dazu:
+  GET  /tv/status -> cec-control.sh status (TV an/aus schaltet der Cron-Zeitplan)
   GET  /verse   -> Vers des Tages von YouVersion (Fallback im Board: verses.js)
 Nur stdlib, lauscht ausschließlich auf 127.0.0.1.
 """
@@ -45,10 +42,6 @@ def read_env(path):
     except OSError:
         pass
     return values
-
-
-def show_test_buttons():
-    return read_env(CONFIG_FILE).get("SHOW_TEST_BUTTONS", "false").lower() in ("1", "true", "yes", "on")
 
 
 DEFAULT_CANVA_URL = "https://www.canva.com/design/DAGeJOlW_fg/dcvDxGynTmQVinQOyVVR2Q/view"
@@ -133,7 +126,6 @@ def board_config():
         except ValueError:
             return default
     return {
-        "showTestButtons": env.get("SHOW_TEST_BUTTONS", "false").lower() in ("1", "true", "yes", "on"),
         "startView": env.get("START_VIEW", "board").strip() or "board",
         "canvaEmbedUrl": canva_embed_url(env),
         "canvaSlideSeconds": num("CANVA_SLIDE_SECONDS", 10),
@@ -231,13 +223,6 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         path = self.path.split("?", 1)[0]
-        if path in ("/tv/on", "/tv/off"):
-            if not show_test_buttons():
-                self._json(403, {"ok": False, "error": "SHOW_TEST_BUTTONS ist aus"})
-                return
-            ok, out = run_cec(path.rsplit("/", 1)[1])
-            self._json(200 if ok else 500, {"ok": ok, "output": out})
-            return
         self._json(404, {"ok": False, "error": "unbekannt"})
 
 

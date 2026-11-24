@@ -39,7 +39,7 @@ Das Skript:
 
 **HDMI-CEC-Zeitplan**
 ```bash
-nano ~/.config/pi-screen/schedule.env   # TV_ON=08:00, TV_OFF=22:30, TV_DAYS=* | 1-5 | 0,6
+nano ~/.config/pi-screen/schedule.env   # TV_ON=07:30, TV_OFF=20:17, TV_DAYS=1-5 (Standard: Mo–Fr; * | 1-5 | 0,6)
 ~/pi-screen/scripts/apply-schedule.sh   # übernimmt in die crontab
 ```
 
@@ -47,11 +47,6 @@ nano ~/.config/pi-screen/schedule.env   # TV_ON=08:00, TV_OFF=22:30, TV_DAYS=* |
 ```bash
 ~/pi-screen/scripts/cec-control.sh on|off|status
 ```
-
-**Testbuttons „TV aus“ / „TV an“ (temporär)**
-- unten rechts auf dem Board, nur bei `SHOW_TEST_BUTTONS=true` in `~/.config/pi-screen/board.env`
-- ausschalten: `SHOW_TEST_BUTTONS=false`, danach Board neu laden (`pkill -f pi-screen/board-profile`, startet in 3 s neu)
-- nach „TV aus“ ist der TV im Standby: Einschalten per Zeitplan oder SSH
 
 **Fehlersuche**
 ```bash
